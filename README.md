@@ -1,38 +1,85 @@
-# 🧟 Zombie Tower Defense
+## 📦 Download
 
-A feature-rich Tower Defense game built with Python and Pygame. Defend your base against waves of zombies across 50 procedurally generated levels!
+### Windows (Portable)
+- **Version 1.0.0** - [Download ZIP](https://github.com/yourusername/zombie-tower-defense/releases/download/v1.0.0/ZombieTowerDefense_Portable.zip)
+- No installation required!
+- Just unzip and run `ZombieTowerDefense.exe`
 
-![Gameplay Screenshot](https://via.placeholder.com/800x400?text=Zombie+Tower+Defense+Screenshot)
+### System Requirements
+- Windows 7, 8, 10, 11
+- 64-bit processor
+- 100 MB free disk space
+- 2 GB RAM recommended
+- No Python required!
 
-## 🎮 Features
+---
 
-- **50 Procedurally Generated Levels** - Each level offers unique challenges with random enemy waves
-- **3 Tower Types** - Basic, Sniper, and Cannon towers with upgrade system (up to level 5)
-- **Progression System** - Unlock levels sequentially, track your progress
-- **Wave System** - Dynamic waves with increasing difficulty
-- **Tower Upgrade System** - Click on towers to upgrade their stats
-- **Audio System** - Background music and sound effects with volume controls
-- **Save/Load System** - Progress saved automatically in SQLite database
-- **Settings Menu** - Adjust master volume, music volume, and SFX volume
-- **Level Selection** - Visual grid showing completed (green), available (yellow), and locked (red) levels
-- **Responsive UI** - Clean interface with real-time HUD
+## 📖 Full Documentation
 
-## 🛠️ Technologies
+[Full Documentation](docs/README.md)
 
-- **Python 3.12+** - Core language
-- **Pygame 2.5.2** - Game engine and rendering
-- **SQLite** - Progress persistence
-- **NumPy** - Sound generation (optional)
+---
 
-## 📦 Installation
+## 📸 Screenshots
 
-### Prerequisites
-- Python 3.12 or higher
-- pip (Python package manager)
+### Main Menu
+![Main Menu](screenshots/menu.png)
 
-### Steps
+### Level Selection
+![Level Selection](screenshots/levels.png)
 
-1. **Clone the repository**
-```bash
-git clone https://github.com/yourusername/zombie-tower-defense.git
-cd zombie-tower-defense
+### Gameplay
+![Gameplay](screenshots/gameplay.png)
+
+### Settings
+![Settings](screenshots/settings.png)
+
+---
+
+## 📦 Release Notes
+
+### Version 1.0.0 (2026)
+- 🎮 **50 procedurally generated levels**
+- 🏗️ **3 tower types** (Basic, Sniper, Cannon)
+- ⬆️ **Tower upgrade system** (up to level 5)
+- 🎯 **Level selection menu** with progress tracking
+- 🔊 **Full audio system** with volume controls
+- 💾 **SQLite save system**
+- 🎨 **Clean UI** with real-time HUD
+- 🏆 **Progress tracking** (completed/available/locked levels)
+- 📦 **Portable version** - no installation needed!
+
+### Upcoming Features (v1.1.0)
+- ❄️ Freeze towers
+- ☠️ Poison towers
+- 💥 Special abilities
+- 🏅 Achievements system
+- 📊 Statistics and leaderboards
+
+---
+
+## 🎮 Quick Start
+
+1. [Download the latest release](https://github.com/yourusername/zombie-tower-defense/releases/latest)
+2. Unzip the archive
+3. Double-click `ZombieTowerDefense.exe`
+4. Play!
+
+---
+
+## 🔧 Development Setup
+
+If you want to modify the game:
+
+1. Clone the repository
+2. Install Python 3.12+
+3. Install dependencies: `pip install -r requirements.txt`
+4. Generate sounds: `python generate_sounds.py`
+5. Run: `python main.py`
+6. Build EXE: Run `build_working.bat`
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
