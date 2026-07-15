@@ -34,3 +34,19 @@
 ---
 
 ## 🎯 Controls
+
+B - Build mode
+1-3 - Select tower
+Click - Build / Upgrade
+ESC - Pause
+
+
+---
+
+## 📦 Download
+
+| Platform | Version | Link |
+|----------|---------|------|
+| Windows 10/11 | v1.0.0 | [Download ZIP](https://github.com/yourusername/zombie-tower-defense/releases/download/v1.0.0/ZombieTowerDefense_Portable.zip) |
+
+**Requirements:** Windows 7+, 100MB disk, 2GB RAM
