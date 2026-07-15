@@ -82,4 +82,46 @@ A feature-rich Tower Defense game built with Python and Pygame. Defend your base
 | 🟡 **Yellow** | Level available, not completed |
 | 🔴 **Red** | Level locked (complete previous to unlock) |
 
-## 📁 Project Structure
+
+## 🎨 Architecture
+
+The game follows several design patterns:
+
+- **State Machine** - Manages game states (Menu, Playing, Paused, Game Over, Settings, Level Select)
+- **Event Bus** - Decoupled communication between components
+- **Factory Pattern** - Dynamic enemy creation
+- **Singleton** - Audio manager and settings manager
+- **Observer** - Event-driven architecture
+- **Data-Driven Design** - JSON configuration files
+
+## 🔧 Configuration
+
+### Game Settings
+
+Settings are stored in `settings.json`:
+
+| Setting | Description | Range |
+|---------|-------------|-------|
+| `master_volume` | Overall volume | 0.0 - 1.0 |
+| `music_volume` | Background music volume | 0.0 - 1.0 |
+| `sfx_volume` | Sound effects volume | 0.0 - 1.0 |
+| `sound_enabled` | Toggle sound effects | true/false |
+| `music_enabled` | Toggle background music | true/false |
+| `fullscreen` | Fullscreen mode | true/false |
+| `fps_limit` | Frame rate limit | 30-144 |
+
+### Customizing Enemies
+
+Edit `data/configs/enemies.json` to add or modify enemy types:
+
+```json
+{
+  "zombie_light": {
+    "id": "zombie_light",
+    "health": 40,
+    "speed": 120,
+    "reward_gold": 8,
+    "reward_exp": 3,
+    "base_damage": 1
+  }
+}
