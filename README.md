@@ -61,4 +61,4 @@ ESC - Pause
     v1.3.0 - Special abilities, new enemy types
 
     v2.0.0 - Multiplayer co-op
-python main.py
+
