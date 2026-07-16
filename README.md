@@ -13,65 +13,99 @@
 
 **Zombie Tower Defense** is a classic tower defense game where you build defensive towers to stop waves of zombies from reaching your castle. Strategically place different tower types, upgrade them, and survive as long as possible!
 
-### 🧟 Story
-The zombie apocalypse has begun! Zombies are emerging from portals and marching toward your castle. Build towers along their path, upgrade your defenses, and protect your kingdom from the undead horde!
-
 ---
 
-## ✨ Features
+## 🏰 Gameplay
 
-### 🏰 Gameplay
 - **4 Unique Tower Types**: Sniper, Turret, Flamethrower, Electric — each with 4 upgrade levels
 - **5 Enemy Types**: Normal, Fast, Tank, Night (dodge chance), and Boss
 - **50 Levels**: Progressive difficulty with new enemies unlocking as you advance
 - **Wave System**: Each level has multiple waves with increasing difficulty
 - **Boss Waves**: Challenge yourself with powerful boss enemies every 5 levels
 
-### 🎨 Visuals
+---
+
+## 🎨 Visuals
+
 - **Animated Sprites**: 4-directional animations for all enemy types
 - **Tower Sprites**: Unique visuals for each tower and upgrade level
 - **Projectile Effects**: Bullets, fireballs, lightning, and chain lightning
 - **Adaptive UI**: Scales perfectly to any screen resolution
 
-### 🎮 Controls
-- **LMB on Tower**: Open upgrade/sell UI
-- **LMB on Tower Panel**: Select tower type
-- **RMB**: Toggle build mode
-- **Middle Mouse**: Drag to pan camera
-- **1-4**: Quick tower select
-- **ESC**: Pause game
+---
 
-### 🗺️ Custom Maps
-- **Map Editor**: Create your own levels with custom paths
-- **Waypoint System**: Place waypoints to define zombie path
-- **Auto-Road Generation**: Convert waypoints to road tiles
-- **Custom Level Selector**: Play your own maps alongside standard levels
+## 🎮 Controls
 
-### 💾 Save System
+| Action | Control |
+|--------|---------|
+| Select Tower | Click on tower panel or press **1-4** |
+| Build Mode | **RMB** toggle |
+| Build Tower | **LMB** on empty grass tile |
+| Upgrade Tower | **LMB** on tower → click **⬆** |
+| Sell Tower | **LMB** on tower → click **$** |
+| Pan Camera | **Middle Mouse** drag |
+| Quick Select | **1** Sniper, **2** Turret, **3** Flamethrower, **4** Electric |
+| Pause | **ESC** |
+
+---
+
+## 🗺️ Map Editor
+
+Create your own custom levels!
+
+| Action | Control |
+|--------|---------|
+| Select Tile | **1-9, 0** |
+| Waypoint Mode | **W** |
+| Erase Mode | **E** |
+| Convert Waypoints to Road | **R** |
+| Save Map | **S** |
+| Load Map | **L** |
+| Delete Last Waypoint | **Backspace** |
+| Clear Waypoints | **C** |
+| Toggle Path Display | **H** |
+
+**How to Create a Map:**
+1. Place **portal** (start) and **castle** (end)
+2. Place waypoints to define the zombie path
+3. Press **R** to auto-generate road tiles
+4. Save and play from Level Select!
+
+---
+
+## 💾 Save System
+
 - **Automatic Progress Saving**: Level completion is saved automatically
 - **SQLite Database**: All game data stored in `saves/game.db`
 - **Settings Persistence**: Volume and display settings saved to `settings.json`
 
 ---
 
-## 📥 Installation
+## 🐛 Known Issues (v1.2.0)
 
-### Option 1: Portable EXE (Recommended)
-1. Download `ZombieTowerDefense.exe` from [Releases](https://github.com/yourusername/zombie-tower-defense/releases)
-2. Extract the portable folder
-3. Double-click `ZombieTowerDefense.exe` to play!
+- Zoom disabled temporarily (causes sprite scaling issues)
+- Enemy pathfinding can be inconsistent on custom maps
+- Sound effects may not play on first launch
 
-### Option 2: From Source
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/zombie-tower-defense.git
-cd zombie-tower-defense
+---
 
-# Install dependencies
-pip install -r requirements.txt
+## 🚀 Next (v1.3.0)
 
-# Generate sounds
-python generate_sounds.py
+- Tower attack animations
+- Sound effects library
+- Tooltip system
+- Mini-map
+- Achievements system
+- More enemy types
 
-# Run the game
-python main.py
+---
+
+## ⭐ Show Your Support
+
+If you like this project, please give it a ⭐ on GitHub!
+
+---
+
+**Made with ❤️ by Zombie Tower Defense Team**
+
+[GitHub](https://github.com/yourusername/zombie-tower-defense) • [Releases](https://github.com/yourusername/zombie-tower-defense/releases)
