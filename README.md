@@ -1,6 +1,6 @@
 # 🧟 Zombie Tower Defense
 
-> **Version 1.2.0** — Build towers, defend your castle, survive the zombie apocalypse!
+> **Version 1.2.1** — Build towers, defend your castle, survive the zombie apocalypse!
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![Pygame](https://img.shields.io/badge/Pygame-2.6.0-green.svg)](https://www.pygame.org/)
@@ -30,6 +30,9 @@
 - **Animated Sprites**: 4-directional animations for all enemy types
 - **Tower Sprites**: Unique visuals for each tower and upgrade level
 - **Projectile Effects**: Bullets, fireballs, lightning, and chain lightning
+- **Muzzle Flashes**: Visual feedback when towers fire
+- **Hit Effects**: Decals and particles on enemy impact
+- **Death Animations**: Enemies fall and remain on the ground
 - **Adaptive UI**: Scales perfectly to any screen resolution
 
 ---
@@ -81,7 +84,7 @@ Create your own custom levels!
 
 ---
 
-## 🐛 Known Issues (v1.2.0)
+## 🐛 Known Issues (v1.2.1)
 
 - Zoom disabled temporarily (causes sprite scaling issues)
 - Enemy pathfinding can be inconsistent on custom maps
@@ -89,14 +92,28 @@ Create your own custom levels!
 
 ---
 
-## 🚀 Next (v1.3.0)
+## 🚀 Roadmap — v1.3.0
 
-- Tower attack animations
-- Sound effects library
-- Tooltip system
+- Enemy death animations
+- Hit decals
+- Flying enemies
+- New towers (Anti-Air, Freezing, Acid, Rocket, Water)
+- Tower combinations
+- Combo attacks
+- Level progression
+- Missions
+- Endless mode
+- Level statistics
+- Tower efficiency
+- Bullet tracers
+- Explosion waves
+- Freeze effects
+- Acid effects
 - Mini-map
+- Wave indicator
+- Popup notifications
+- Castle health bar
 - Achievements system
-- More enemy types
 
 ---
 
