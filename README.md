@@ -1,64 +1,77 @@
 # 🧟 Zombie Tower Defense
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/yourusername/zombie-tower-defense/releases)
-[![Platform](https://img.shields.io/badge/platform-Windows-blue.svg)]()
-[![Downloads](https://img.shields.io/github/downloads/yourusername/zombie-tower-defense/total.svg)]()
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+> **Version 1.2.0** — Build towers, defend your castle, survive the zombie apocalypse!
 
-> Defend your base against waves of zombies in this action-packed Tower Defense game!
+[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
+[![Pygame](https://img.shields.io/badge/Pygame-2.6.0-green.svg)](https://www.pygame.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)](https://github.com/)
 
 ---
 
-## 🎮 Play Now
+## 🎮 About the Game
 
-[![Download](https://img.shields.io/badge/📦_Download_Windows-brightgreen?style=for-the-badge)](https://github.com/yourusername/zombie-tower-defense/releases/latest)
+**Zombie Tower Defense** is a classic tower defense game where you build defensive towers to stop waves of zombies from reaching your castle. Strategically place different tower types, upgrade them, and survive as long as possible!
 
-**No Python required!** Just download, unzip, and play.
+### 🧟 Story
+The zombie apocalypse has begun! Zombies are emerging from portals and marching toward your castle. Build towers along their path, upgrade your defenses, and protect your kingdom from the undead horde!
 
 ---
 
 ## ✨ Features
 
-| Feature | Description |
-|---------|-------------|
-| 🧟 **4 Enemy Types** | Normal, Fast, Tank, Night (each with unique abilities) |
-| 🏗️ **4 Tower Types** | Sniper, Turret, Flamethrower, Electric (upgrade to level 4) |
-| 🗺️ **50 Levels** | Procedurally generated maps with 10-30 turns |
-| 🔊 **Audio System** | Music + SFX with volume controls |
-| 💾 **Auto-Save** | Progress saved to SQLite database |
-| 🎨 **HD Sprites** | 128x128 animations (4 directions × 4 frames) |
-| ⚙️ **Settings** | Resolution, volume, sound toggles |
+### 🏰 Gameplay
+- **4 Unique Tower Types**: Sniper, Turret, Flamethrower, Electric — each with 4 upgrade levels
+- **5 Enemy Types**: Normal, Fast, Tank, Night (dodge chance), and Boss
+- **50 Levels**: Progressive difficulty with new enemies unlocking as you advance
+- **Wave System**: Each level has multiple waves with increasing difficulty
+- **Boss Waves**: Challenge yourself with powerful boss enemies every 5 levels
+
+### 🎨 Visuals
+- **Animated Sprites**: 4-directional animations for all enemy types
+- **Tower Sprites**: Unique visuals for each tower and upgrade level
+- **Projectile Effects**: Bullets, fireballs, lightning, and chain lightning
+- **Adaptive UI**: Scales perfectly to any screen resolution
+
+### 🎮 Controls
+- **LMB on Tower**: Open upgrade/sell UI
+- **LMB on Tower Panel**: Select tower type
+- **RMB**: Toggle build mode
+- **Middle Mouse**: Drag to pan camera
+- **1-4**: Quick tower select
+- **ESC**: Pause game
+
+### 🗺️ Custom Maps
+- **Map Editor**: Create your own levels with custom paths
+- **Waypoint System**: Place waypoints to define zombie path
+- **Auto-Road Generation**: Convert waypoints to road tiles
+- **Custom Level Selector**: Play your own maps alongside standard levels
+
+### 💾 Save System
+- **Automatic Progress Saving**: Level completion is saved automatically
+- **SQLite Database**: All game data stored in `saves/game.db`
+- **Settings Persistence**: Volume and display settings saved to `settings.json`
 
 ---
 
-## 🎯 Controls
+## 📥 Installation
 
-RMB - Toggle build mode
-LMB - Build / Upgrade tower
-Scroll - Switch tower types
-1-4 - Quick tower select
-ESC - Pause
+### Option 1: Portable EXE (Recommended)
+1. Download `ZombieTowerDefense.exe` from [Releases](https://github.com/yourusername/zombie-tower-defense/releases)
+2. Extract the portable folder
+3. Double-click `ZombieTowerDefense.exe` to play!
 
+### Option 2: From Source
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/zombie-tower-defense.git
+cd zombie-tower-defense
 
----
+# Install dependencies
+pip install -r requirements.txt
 
-## 📦 Download
+# Generate sounds
+python generate_sounds.py
 
-| Platform | Version | Link |
-|----------|---------|------|
-| Windows 10/11 | v1.1.0 | [Download EXE](https://github.com/yourusername/zombie-tower-defense/releases/latest) |
-
-**Requirements:** Windows 7+, 100MB disk, 2GB RAM
-
-🎯 Roadmap
-
-    v1.0.0 - Core gameplay
-
-    v1.1.0 - 4 enemies, 4 towers, 50 levels
-
-    v1.2.0 - Tower animations, mini-map, achievements
-
-    v1.3.0 - Special abilities, new enemy types
-
-    v2.0.0 - Multiplayer co-op
-
+# Run the game
+python main.py
