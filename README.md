@@ -1,6 +1,6 @@
 # 🧟 Zombie Tower Defense
 
-> **Version 1.2.1** — Build towers, defend your castle, survive the zombie apocalypse!
+> **Version 1.3.0** — 9 Towers, 5 Enemies, 50 Levels
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![Pygame](https://img.shields.io/badge/Pygame-2.6.0-green.svg)](https://www.pygame.org/)
@@ -9,120 +9,71 @@
 
 ---
 
-## 🎮 About the Game
+## 🎮 About
 
-**Zombie Tower Defense** is a classic tower defense game where you build defensive towers to stop waves of zombies from reaching your castle. Strategically place different tower types, upgrade them, and survive as long as possible!
-
----
-
-## 🏰 Gameplay
-
-- **4 Unique Tower Types**: Sniper, Turret, Flamethrower, Electric — each with 4 upgrade levels
-- **5 Enemy Types**: Normal, Fast, Tank, Night (dodge chance), and Boss
-- **50 Levels**: Progressive difficulty with new enemies unlocking as you advance
-- **Wave System**: Each level has multiple waves with increasing difficulty
-- **Boss Waves**: Challenge yourself with powerful boss enemies every 5 levels
+**Zombie Tower Defense** — Build towers, defend your castle, survive 50 levels!
 
 ---
 
-## 🎨 Visuals
+## 🏰 Features
 
-- **Animated Sprites**: 4-directional animations for all enemy types
-- **Tower Sprites**: Unique visuals for each tower and upgrade level
-- **Projectile Effects**: Bullets, fireballs, lightning, and chain lightning
-- **Muzzle Flashes**: Visual feedback when towers fire
-- **Hit Effects**: Decals and particles on enemy impact
-- **Death Animations**: Enemies fall and remain on the ground
-- **Adaptive UI**: Scales perfectly to any screen resolution
+### 9 Tower Types
+| Tower | Unlock | Special |
+|-------|--------|---------|
+| Sniper | Lv.1 | High damage |
+| Turret | Lv.1 | Fast fire |
+| Flamethrower | Lv.5 | Fire + burn |
+| Electric | Lv.10 | Chain lightning |
+| Water | Lv.12 | Amplifies |
+| PVO | Lv.15 | Anti-air |
+| Freeze | Lv.20 | Slows 50% |
+| Acid | Lv.25 | DoT damage |
+| Rocket | Lv.30 | AOE damage |
+
+### 5 Enemy Types
+- Normal, Fast, Tank, Night, Flying
+
+### Tower Combos
+- Water + Electric = **130% damage**
+- Water + Freeze = **80% slow**
+
+### 50 Levels
+- Hand-crafted paths
+- 15 waves each
+- Progressive difficulty
+
+### Wall System
+- Gates (on road)
+- Walls (on grass)
+- Unlocked at Lv.5
 
 ---
 
 ## 🎮 Controls
 
-| Action | Control |
-|--------|---------|
-| Select Tower | Click on tower panel or press **1-4** |
-| Build Mode | **RMB** toggle |
-| Build Tower | **LMB** on empty grass tile |
-| Upgrade Tower | **LMB** on tower → click **⬆** |
-| Sell Tower | **LMB** on tower → click **$** |
-| Pan Camera | **Middle Mouse** drag |
-| Quick Select | **1** Sniper, **2** Turret, **3** Flamethrower, **4** Electric |
+| Action | Key |
+|--------|-----|
+| Select Tower | **1-9** |
+| Build Mode | **RMB** |
+| Build Tower | **LMB** on grass |
+| Upgrade Tower | **LMB** on tower → ⬆ |
+| Sell Tower | **LMB** on tower → $ |
+| Wall Mode | **G** |
+| Pan Camera | **Middle Mouse** |
 | Pause | **ESC** |
 
 ---
 
-## 🗺️ Map Editor
+## 📥 Installation
 
-Create your own custom levels!
+### Portable EXE (Recommended)
+1. Download `ZombieTowerDefense.exe` from [Releases](https://github.com/yourusername/zombie-tower-defense/releases)
+2. Extract and run!
 
-| Action | Control |
-|--------|---------|
-| Select Tile | **1-9, 0** |
-| Waypoint Mode | **W** |
-| Erase Mode | **E** |
-| Convert Waypoints to Road | **R** |
-| Save Map | **S** |
-| Load Map | **L** |
-| Delete Last Waypoint | **Backspace** |
-| Clear Waypoints | **C** |
-| Toggle Path Display | **H** |
-
-**How to Create a Map:**
-1. Place **portal** (start) and **castle** (end)
-2. Place waypoints to define the zombie path
-3. Press **R** to auto-generate road tiles
-4. Save and play from Level Select!
-
----
-
-## 💾 Save System
-
-- **Automatic Progress Saving**: Level completion is saved automatically
-- **SQLite Database**: All game data stored in `saves/game.db`
-- **Settings Persistence**: Volume and display settings saved to `settings.json`
-
----
-
-## 🐛 Known Issues (v1.2.1)
-
-- Zoom disabled temporarily (causes sprite scaling issues)
-- Enemy pathfinding can be inconsistent on custom maps
-- Sound effects may not play on first launch
-
----
-
-## 🚀 Roadmap — v1.3.0
-
-- Enemy death animations
-- Hit decals
-- Flying enemies
-- New towers (Anti-Air, Freezing, Acid, Rocket, Water)
-- Tower combinations
-- Combo attacks
-- Level progression
-- Missions
-- Endless mode
-- Level statistics
-- Tower efficiency
-- Bullet tracers
-- Explosion waves
-- Freeze effects
-- Acid effects
-- Mini-map
-- Wave indicator
-- Popup notifications
-- Castle health bar
-- Achievements system
-
----
-
-## ⭐ Show Your Support
-
-If you like this project, please give it a ⭐ on GitHub!
-
----
-
-**Made with ❤️ by Zombie Tower Defense Team**
-
-[GitHub](https://github.com/yourusername/zombie-tower-defense) • [Releases](https://github.com/yourusername/zombie-tower-defense/releases)
+### From Source
+```bash
+git clone https://github.com/yourusername/zombie-tower-defense.git
+cd zombie-tower-defense
+pip install -r requirements.txt
+python generate_sounds.py
+python main.py
