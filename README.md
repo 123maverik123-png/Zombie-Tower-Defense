@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.3.0-brightgreen.svg?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.3.3-brightgreen.svg?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/Python-3.12-blue.svg?style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/Pygame-2.6.0-orange.svg?style=for-the-badge" alt="Pygame">
   <img src="https://img.shields.io/badge/Platform-Windows-lightgrey.svg?style=for-the-badge" alt="Platform">
