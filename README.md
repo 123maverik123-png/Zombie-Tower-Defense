@@ -8,7 +8,7 @@
 <p align="center">
   <h1 align="center">🧟 Zombie Tower Defense</h1>
   <p align="center">
-    <strong>Version 1.3.0</strong> — 9 Towers, 5 Enemies, 50 Levels
+    <strong>Version 1.3.3</strong> — 9 Towers, 5 Enemies, 50 Levels
   </p>
 </p>
 
