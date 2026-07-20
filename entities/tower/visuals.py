@@ -7,12 +7,20 @@ from services.resource_loader import ResourceLoader
 
 class TowerVisuals:
     """Управление отрисовкой башни"""
-    
+
+    # Башни с поворотной головой: base = level_N.png, head = head_N.png
+    ROTATING_IDS = ('turret', 'flamethrower')
+
     def __init__(self, tower):
         self.tower = tower
         self.image = None
+        self.head_image = None
         self._spark_timer = 0.0
-    
+
+    @property
+    def has_head(self) -> bool:
+        return self.tower.id in self.ROTATING_IDS
+
     def load_image(self):
         tower = self.tower
         try:
@@ -22,6 +30,14 @@ class TowerVisuals:
             self.image = loader.load_image(image_name, scale=(tower.width, tower.height))
         except Exception:
             self.image = self._create_fallback_image()
+        if self.has_head:
+            try:
+                from core.graphics_theme import towers_dir
+                loader = ResourceLoader()
+                head_name = f"{towers_dir()}/{tower.id}/head_{tower.upgrades.level}.png"
+                self.head_image = loader.load_image(head_name, scale=(tower.width, tower.height))
+            except Exception:
+                self.head_image = None
     
     def _create_fallback_image(self) -> pygame.Surface:
         tower = self.tower
@@ -70,6 +86,21 @@ class TowerVisuals:
             renderer.load_texture(name, self.image or self._create_fallback_image())
         region = renderer.get_region(name)
         renderer.batch.draw(region, cx, cy, tower.width, tower.height)
+
+        # Поворотная голова (пулемёт/огнемёт) — вращается к цели
+        if self.has_head:
+            head_name = f"{name}_head"
+            if not renderer.has_texture(head_name):
+                if self.head_image is None:
+                    self.load_image()
+                if self.head_image is not None:
+                    renderer.load_texture(head_name, self.head_image)
+            if renderer.has_texture(head_name):
+                head_region = renderer.get_region(head_name)
+                # Ось вращения совпадает с тумбой на базе (чуть ниже центра)
+                renderer.batch.draw(head_region, cx, cy + tower.height * 0.05,
+                                    tower.width, tower.height,
+                                    rotation=tower.aim_angle)
 
         # Текст уровня — кэш отрендеренных надписей в атласе
         level = tower.upgrades.level

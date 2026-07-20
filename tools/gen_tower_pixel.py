@@ -411,6 +411,105 @@ DEVICES = {
 }
 
 
+# ============================================================
+# ПОВОРОТНЫЕ ГОЛОВЫ (оружие смотрит ВПРАВО, ось вращения = центр 16,16)
+# Для башен, которые целятся стволом: пулемёт и огнемёт.
+# База рисуется отдельно (платформа + статичные части).
+# ============================================================
+
+def head_turret(g, lv, gl):
+    """Пулемёт в плане: короб + ствол вправо, лента слева."""
+    # Короб с патронной лентой (сзади, слева от оси)
+    rect(g, 7, 13, 10, 18, IRON_D)
+    rect(g, 7, 13, 10, 13, IRON)
+    px(g, 8, 14, HAZARD)
+    px(g, 9, 16, HAZARD)
+    # Ствольная коробка на оси
+    rect(g, 11, 12, 19, 19, IRON)
+    rect(g, 11, 12, 19, 12, IRON_L)
+    px(g, 12, 18, IRON_L)  # заклёпка
+    px(g, 18, 18, IRON_L)
+    # Ствол с кожухом охлаждения (вправо)
+    blen = 8 + lv
+    rect(g, 20, 14, 19 + blen, 17, IRON_L)
+    rect(g, 20, 15, 19 + blen, 16, IRON)
+    for x in range(21, 18 + blen, 2):
+        px(g, x, 14, IRON_D)  # отверстия кожуха
+        px(g, x, 17, IRON_D)
+    # Дульный срез
+    rect(g, 19 + blen, 13, 20 + blen, 18, IRON_D)
+    if lv >= 2:
+        # Бронещиток спереди короба
+        rect(g, 19, 10, 20, 21, IRON)
+        rect(g, 19, 10, 19, 21, IRON_L)
+    if lv >= 4:
+        px(g, 21 + blen, 15, gl)  # вспышка
+        px(g, 21 + blen, 16, gl)
+
+
+def head_flamethrower(g, lv, gl):
+    """Сопло огнемёта в плане: подводка + раструб вправо, бачок сзади."""
+    # Малый расходный бачок (сзади)
+    rect(g, 7, 12, 10, 19, RUST)
+    rect(g, 7, 12, 10, 13, RUST_D)
+    px(g, 8, 15, (140, 84, 52))
+    # Подводящая труба на оси
+    rect(g, 11, 14, 16, 17, IRON_D)
+    px(g, 13, 14, IRON)  # хомут
+    px(g, 13, 17, IRON)
+    # Сопло
+    rect(g, 17, 13, 23, 18, IRON)
+    rect(g, 17, 13, 23, 13, IRON_L)
+    # Раструб
+    rect(g, 24, 12, 26, 19, IRON_L)
+    rect(g, 24, 12, 24, 19, IRON)
+    # Дежурное пламя
+    px(g, 27, 15, gl)
+    px(g, 27, 16, gl)
+    px(g, 28, 15, (255, 220, 120))
+    if lv >= 3:
+        rect(g, 5, 13, 6, 18, RUST_D)  # бачок больше
+    if lv >= 4:
+        px(g, 9, 14, gl)   # индикатор давления
+        px(g, 29, 16, gl)  # пламя мощнее
+
+
+def base_turret(g, lv, gl):
+    """База пулемёта: платформа + поворотная тумба."""
+    draw_base(g, lv, gl)
+    rect(g, 13, 16, 18, 19, IRON_D)
+    rect(g, 14, 15, 17, 15, IRON)
+    px(g, 15, 17, IRON_L)  # ось
+    px(g, 16, 17, IRON_L)
+
+
+def base_flamethrower(g, lv, gl):
+    """База огнемёта: платформа + большой топливный бак (статичный)."""
+    draw_base(g, lv, gl)
+    # Большой бак слева на платформе
+    rect(g, 5, 12, 10, 21, RUST)
+    rect(g, 6, 11, 9, 11, RUST_D)
+    rect(g, 5, 12, 10, 13, RUST_D)
+    rect(g, 6, 14, 6, 19, (140, 84, 52))
+    for i, x in enumerate(range(5, 11)):
+        px(g, x, 17, HAZARD if i % 2 == 0 else IRON_D)
+    # Вентиль
+    px(g, 7, 10, IRON_D)
+    px(g, 8, 10, IRON_D)
+    # Поворотная тумба по центру
+    rect(g, 14, 16, 19, 19, IRON_D)
+    px(g, 16, 17, IRON_L)
+    if lv >= 3:
+        rect(g, 25, 14, 26, 21, RUST_D)  # запасной баллон справа
+        px(g, 25, 16, RUST)
+
+
+ROTATING = {
+    'turret': (base_turret, head_turret),
+    'flamethrower': (base_flamethrower, head_flamethrower),
+}
+
+
 def grid_to_image(g) -> Image.Image:
     img = Image.new('RGBA', (GW, GH), (0, 0, 0, 0))
     for y in range(GH):
@@ -429,11 +528,23 @@ def generate():
         os.makedirs(out_dir, exist_ok=True)
         gl = GLOW[tower_id]
         for lv in range(1, 5):
-            g = [[None] * GW for _ in range(GH)]
-            draw_base(g, lv, gl)
-            dev(g, lv, gl)
-            outline(g)
-            grid_to_image(g).save(f"{out_dir}/level_{lv}.png")
+            if tower_id in ROTATING:
+                # База и голова отдельными файлами (голова вращается в игре)
+                base_fn, head_fn = ROTATING[tower_id]
+                g = [[None] * GW for _ in range(GH)]
+                base_fn(g, lv, gl)
+                outline(g)
+                grid_to_image(g).save(f"{out_dir}/level_{lv}.png")
+                g = [[None] * GW for _ in range(GH)]
+                head_fn(g, lv, gl)
+                outline(g)
+                grid_to_image(g).save(f"{out_dir}/head_{lv}.png")
+            else:
+                g = [[None] * GW for _ in range(GH)]
+                draw_base(g, lv, gl)
+                dev(g, lv, gl)
+                outline(g)
+                grid_to_image(g).save(f"{out_dir}/level_{lv}.png")
         print(f"OK towers_pixel/{tower_id}")
 
 

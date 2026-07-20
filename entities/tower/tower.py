@@ -1,5 +1,6 @@
 # entities/tower/tower.py
 import pygame
+import math
 import random
 from typing import Optional, List
 from entities.base import Entity
@@ -73,6 +74,10 @@ class Tower(Entity):
         self.targeting = TowerTargeting(self)
         self.shooting = TowerShooting(self)
         self.upgrades = TowerUpgrades(self)
+
+        # Поворотная голова (пулемёт/огнемёт): угол в градусах, 0 = вправо
+        self.aim_angle = 0.0
+        self._aim_target_angle = 0.0
         self.visuals = TowerVisuals(self)
         
         self.image = None
@@ -110,6 +115,18 @@ class Tower(Entity):
             from .targeting import in_square_range
             if in_square_range(self, self.target):
                 has_target = True
+
+        # Плавный доворот головы к цели (пулемёт/огнемёт)
+        if has_target:
+            self._aim_target_angle = math.degrees(
+                math.atan2(self.target.y - self.y, self.target.x - self.x))
+        diff = (self._aim_target_angle - self.aim_angle + 180) % 360 - 180
+        turn_speed = 360 * dt  # градусов в секунду
+        if abs(diff) <= turn_speed:
+            self.aim_angle = self._aim_target_angle
+        else:
+            self.aim_angle += turn_speed if diff > 0 else -turn_speed
+        self.aim_angle %= 360
         
         # Огнемёт — глобальный звук
         if self.id == 'flamethrower':
