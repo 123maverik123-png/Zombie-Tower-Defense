@@ -13,9 +13,22 @@
     "height": 64,
     "target_type": "ground",
     "upgrade_stats": {
-      "level_2": { "damage_mult": 1.3, "fire_rate_mult": 1.0, "range_cells": 7 },
-      "level_3": { "damage_mult": 1.6, "fire_rate_mult": 1.0, "range_cells": 8 },
-      "level_4": { "damage_mult": 2.0, "fire_rate_mult": 0.7, "range_cells": 9, "special": "crit_damage_x2" }
+      "level_2": {
+        "damage_mult": 1.3,
+        "fire_rate_mult": 1.0,
+        "range_cells": 7
+      },
+      "level_3": {
+        "damage_mult": 1.6,
+        "fire_rate_mult": 1.0,
+        "range_cells": 8
+      },
+      "level_4": {
+        "damage_mult": 2.0,
+        "fire_rate_mult": 0.7,
+        "range_cells": 9,
+        "special": "crit_damage_x2"
+      }
     }
   },
   "turret": {
@@ -23,7 +36,7 @@
     "name": "Пулемёт",
     "cost": 80,
     "damage": 10,
-    "fire_rate": 0.20,
+    "fire_rate": 0.2,
     "range_cells": 4,
     "upgrade_cost": 120,
     "damage_type": "physical",
@@ -32,9 +45,22 @@
     "height": 64,
     "target_type": "ground",
     "upgrade_stats": {
-      "level_2": { "damage_mult": 2, "fire_rate_mult": 0.8, "range_cells": 4.5 },
-      "level_3": { "damage_mult": 1.3, "fire_rate_mult": 0.7, "range_cells": 5 },
-      "level_4": { "damage_mult": 1.2, "fire_rate_mult": 0.7, "range_cells": 5.5, "special": "double_shot_chance_15" }
+      "level_2": {
+        "damage_mult": 2,
+        "fire_rate_mult": 0.8,
+        "range_cells": 4.5
+      },
+      "level_3": {
+        "damage_mult": 1.3,
+        "fire_rate_mult": 0.7,
+        "range_cells": 5
+      },
+      "level_4": {
+        "damage_mult": 1.2,
+        "fire_rate_mult": 0.7,
+        "range_cells": 5.5,
+        "special": "double_shot_chance_15"
+      }
     }
   },
   "flamethrower": {
@@ -55,9 +81,30 @@
     "height": 64,
     "target_type": "ground",
     "upgrade_stats": {
-      "level_2": { "damage_mult": 1.2, "fire_rate_mult": 1.0, "range_cells": 3, "aoe_radius_cells": 1.8, "fire_dot_damage": 5 },
-      "level_3": { "damage_mult": 1.4, "fire_rate_mult": 1.0, "range_cells": 3.5, "aoe_radius_cells": 2.0, "fire_dot_damage": 6, "fire_dot_duration": 4.0 },
-      "level_4": { "damage_mult": 1.6, "fire_rate_mult": 1.0, "range_cells": 4, "aoe_radius_cells": 2.5, "fire_dot_damage": 8, "fire_dot_duration": 5.0, "special": "burning_ground_duration_2" }
+      "level_2": {
+        "damage_mult": 1.2,
+        "fire_rate_mult": 1.0,
+        "range_cells": 3,
+        "aoe_radius_cells": 1.8,
+        "fire_dot_damage": 5
+      },
+      "level_3": {
+        "damage_mult": 1.4,
+        "fire_rate_mult": 1.0,
+        "range_cells": 3.5,
+        "aoe_radius_cells": 2.0,
+        "fire_dot_damage": 6,
+        "fire_dot_duration": 4.0
+      },
+      "level_4": {
+        "damage_mult": 1.6,
+        "fire_rate_mult": 1.0,
+        "range_cells": 4,
+        "aoe_radius_cells": 2.5,
+        "fire_dot_damage": 8,
+        "fire_dot_duration": 5.0,
+        "special": "burning_ground_duration_2"
+      }
     }
   },
   "electric": {
@@ -75,12 +122,28 @@
     "bonus_multiplier": 1.5,
     "width": 64,
     "height": 64,
-    "target_type": "all",
+    "target_type": "ground",
     "chain_count": 3,
     "upgrade_stats": {
-      "level_2": { "damage_mult": 1.3, "fire_rate_mult": 1.0, "range_cells": 3.5, "chain_count": 5 },
-      "level_3": { "damage_mult": 1.6, "fire_rate_mult": 1.0, "range_cells": 4, "chain_count": 7 },
-      "level_4": { "damage_mult": 2.0, "fire_rate_mult": 1.0, "range_cells": 4.5, "chain_count": 10, "special": "chain_lightning" }
+      "level_2": {
+        "damage_mult": 1.3,
+        "fire_rate_mult": 1.0,
+        "range_cells": 3.5,
+        "chain_count": 5
+      },
+      "level_3": {
+        "damage_mult": 1.6,
+        "fire_rate_mult": 1.0,
+        "range_cells": 4,
+        "chain_count": 7
+      },
+      "level_4": {
+        "damage_mult": 2.0,
+        "fire_rate_mult": 1.0,
+        "range_cells": 4.5,
+        "chain_count": 10,
+        "special": "chain_lightning"
+      }
     }
   },
   "pvo": {
@@ -91,15 +154,28 @@
     "fire_rate": 0.33,
     "range_cells": 5,
     "upgrade_cost": 150,
-    "damage_type": "physical",
+    "damage_type": "pvo",
     "projectile_speed": 500,
     "width": 64,
     "height": 64,
     "target_type": "flying",
     "upgrade_stats": {
-      "level_2": { "damage_mult": 1.15, "fire_rate_mult": 1.15, "range_cells": 5.5 },
-      "level_3": { "damage_mult": 1.3, "fire_rate_mult": 1.3, "range_cells": 6 },
-      "level_4": { "damage_mult": 1.5, "fire_rate_mult": 1.5, "range_cells": 6.5, "special": "crit_damage_x2" }
+      "level_2": {
+        "damage_mult": 1.15,
+        "fire_rate_mult": 1.15,
+        "range_cells": 5.5
+      },
+      "level_3": {
+        "damage_mult": 1.3,
+        "fire_rate_mult": 1.3,
+        "range_cells": 6
+      },
+      "level_4": {
+        "damage_mult": 1.5,
+        "fire_rate_mult": 1.5,
+        "range_cells": 6.5,
+        "special": "crit_damage_x2"
+      }
     }
   },
   "water": {
@@ -114,11 +190,16 @@
     "projectile_speed": 300,
     "width": 64,
     "height": 64,
-    "target_type": "all",
+    "target_type": "ground",
     "effect_duration": 10.0,
     "max_level": 2,
     "upgrade_stats": {
-      "level_2": { "fire_rate_mult": 0.7, "range_cells": 4, "effect_duration": 12.0, "bonus_multiplier": 1.5 }
+      "level_2": {
+        "fire_rate_mult": 0.7,
+        "range_cells": 4,
+        "effect_duration": 12.0,
+        "bonus_multiplier": 1.5
+      }
     },
     "bonus_multiplier": 1.3
   },
@@ -138,9 +219,27 @@
     "slow_multiplier": 0.5,
     "slow_duration": 3.0,
     "upgrade_stats": {
-      "level_2": { "damage_mult": 1.2, "fire_rate_mult": 1.0, "range_cells": 3.5, "slow_multiplier": 0.45, "slow_duration": 3.5 },
-      "level_3": { "damage_mult": 1.4, "fire_rate_mult": 1.0, "range_cells": 4, "slow_multiplier": 0.4, "slow_duration": 4.0 },
-      "level_4": { "damage_mult": 1.6, "fire_rate_mult": 0.7, "range_cells": 4.5, "slow_multiplier": 0.3, "slow_duration": 5.0 }
+      "level_2": {
+        "damage_mult": 1.2,
+        "fire_rate_mult": 1.0,
+        "range_cells": 3.5,
+        "slow_multiplier": 0.45,
+        "slow_duration": 3.5
+      },
+      "level_3": {
+        "damage_mult": 1.4,
+        "fire_rate_mult": 1.0,
+        "range_cells": 4,
+        "slow_multiplier": 0.4,
+        "slow_duration": 4.0
+      },
+      "level_4": {
+        "damage_mult": 1.6,
+        "fire_rate_mult": 0.7,
+        "range_cells": 4.5,
+        "slow_multiplier": 0.3,
+        "slow_duration": 5.0
+      }
     }
   },
   "acid": {
@@ -160,9 +259,25 @@
     "acid_interval": 0.5,
     "acid_duration": 6.0,
     "upgrade_stats": {
-      "level_2": { "damage_mult": 1.2, "acid_damage": 7, "range_cells": 4, "acid_duration": 7.0 },
-      "level_3": { "damage_mult": 1.4, "acid_damage": 9, "range_cells": 4.5, "acid_duration": 8.0 },
-      "level_4": { "damage_mult": 1.6, "acid_damage": 12, "range_cells": 5, "acid_duration": 10.0, "special": "acid_splash" }
+      "level_2": {
+        "damage_mult": 1.2,
+        "acid_damage": 7,
+        "range_cells": 4,
+        "acid_duration": 7.0
+      },
+      "level_3": {
+        "damage_mult": 1.4,
+        "acid_damage": 9,
+        "range_cells": 4.5,
+        "acid_duration": 8.0
+      },
+      "level_4": {
+        "damage_mult": 1.6,
+        "acid_damage": 12,
+        "range_cells": 5,
+        "acid_duration": 10.0,
+        "special": "acid_splash"
+      }
     }
   },
   "rocket": {
@@ -180,9 +295,25 @@
     "height": 64,
     "target_type": "ground",
     "upgrade_stats": {
-      "level_2": { "damage_mult": 1.2, "fire_rate_mult": 1.0, "range_cells": 5.5, "aoe_radius_cells": 3.0 },
-      "level_3": { "damage_mult": 1.4, "fire_rate_mult": 1.0, "range_cells": 6, "aoe_radius_cells": 3.5 },
-      "level_4": { "damage_mult": 1.6, "fire_rate_mult": 0.7, "range_cells": 6.5, "aoe_radius_cells": 4.0, "special": "rocket_rain" }
+      "level_2": {
+        "damage_mult": 1.2,
+        "fire_rate_mult": 1.0,
+        "range_cells": 5.5,
+        "aoe_radius_cells": 3.0
+      },
+      "level_3": {
+        "damage_mult": 1.4,
+        "fire_rate_mult": 1.0,
+        "range_cells": 6,
+        "aoe_radius_cells": 3.5
+      },
+      "level_4": {
+        "damage_mult": 1.6,
+        "fire_rate_mult": 0.7,
+        "range_cells": 6.5,
+        "aoe_radius_cells": 4.0,
+        "special": "rocket_rain"
+      }
     }
   }
 }

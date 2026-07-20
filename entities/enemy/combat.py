@@ -26,7 +26,12 @@ class EnemyCombat:
     def take_damage(self, amount: int, damage_type: str = 'physical') -> int:
         """Наносит урон с учётом уклонения"""
         enemy = self.enemy
-        
+
+        # Летающие враги неуязвимы ко всему, кроме урона ПВО
+        if enemy.is_flying and damage_type != 'pvo':
+            EventBus.emit('enemy_immune', {'enemy': enemy})
+            return 0
+
         dodge_chance = enemy.config.get('dodge_chance', 0.0)
         if dodge_chance > 0 and random.random() < dodge_chance:
             EventBus.emit('enemy_dodged', {'enemy': enemy})

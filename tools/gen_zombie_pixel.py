@@ -220,6 +220,143 @@ def draw_side(P, frame, wings=False):
     return g
 
 
+# ============================================================
+# ЛЕТУЧАЯ МЫШЬ (flying): компактное тело + огромные перепончатые крылья
+# ============================================================
+
+def _bat_wing_pts(span, fold):
+    """Контур перепончатого крыла: список (dx, y_top, y_bot) от тела наружу.
+
+    span — размах в пикселях, fold — насколько крыло поднято/опущено (кадр).
+    Перепонка провисает между "пальцами" — нижняя кромка волнистая.
+    """
+    pts = []
+    for i in range(span):
+        t = i / max(1, span - 1)
+        y_top = fold * t * t * 6                     # кромка уходит вверх/вниз
+        sag = [0, 1, 0, 2, 0, 1][int(t * 5.99) % 6]  # провис между пальцами
+        y_bot = y_top + 4 + int(3 * (1 - t)) + sag
+        pts.append((i, int(round(y_top)), int(round(y_bot))))
+    return pts
+
+
+def _bat_wings(g, P, frame, cx, cy, side_view=False):
+    """Большие машущие крылья. frame задаёт фазу взмаха."""
+    wing = P['cloth_d']
+    membrane = P['cloth']
+    bone = P['skin_l']
+    fold = [-1.0, -0.4, 0.6, -0.4][frame]  # взмах: вверх -> вниз
+    span = 10 if side_view else 9
+    for dx, y_top, y_bot in _bat_wing_pts(span, fold):
+        # левое крыло
+        for y in range(y_top, y_bot + 1):
+            px(g, cx - 4 - dx, cy + y, membrane if y > y_top else wing)
+        # правое крыло
+        if not side_view:
+            for y in range(y_top, y_bot + 1):
+                px(g, cx + 4 + dx, cy + y, membrane if y > y_top else wing)
+    # Косточки-"пальцы" по верхней кромке
+    for fx in (3, 6, span - 1):
+        _, y_top, _ = _bat_wing_pts(span, fold)[fx]
+        px(g, cx - 4 - fx, cy + y_top, bone)
+        if not side_view:
+            px(g, cx + 4 + fx, cy + y_top, bone)
+    # Коготок на сгибе крыла
+    _, tip_top, _ = _bat_wing_pts(span, fold)[span - 1]
+    px(g, cx - 4 - span, cy + tip_top - 1, bone)
+    if not side_view:
+        px(g, cx + 4 + span, cy + tip_top - 1, bone)
+
+
+def draw_bat_front(P, frame):
+    """Летучая мышь спереди: тельце, огромные крылья, уши, лапки поджаты."""
+    g = [[None] * GW for _ in range(GH)]
+    cx = GW // 2
+    bob = [0, -1, 0, 1][frame]
+    cy = 12 + bob
+    _bat_wings(g, P, frame, cx, cy)
+    # Тельце (компактное, пушистое)
+    rect(g, cx - 3, cy - 1, cx + 3, cy + 8, P['skin'])
+    rect(g, cx - 3, cy + 5, cx + 3, cy + 8, P['skin_d'])
+    px(g, cx - 2, cy + 1, P['skin_l'])  # блик груди
+    # Поджатые лапки
+    px(g, cx - 2, cy + 9, P['skin_d'])
+    px(g, cx + 2, cy + 9, P['skin_d'])
+    # Голова
+    rect(g, cx - 3, cy - 6, cx + 3, cy - 1, P['skin'])
+    # Уши — большие треугольные
+    px(g, cx - 3, cy - 8, P['skin'])
+    px(g, cx - 3, cy - 7, P['skin'])
+    px(g, cx - 4, cy - 9, P['skin_d'])
+    px(g, cx + 3, cy - 8, P['skin'])
+    px(g, cx + 3, cy - 7, P['skin'])
+    px(g, cx + 4, cy - 9, P['skin_d'])
+    # Морда: глаза-огоньки, нос, клыки
+    px(g, cx - 2, cy - 4, P['eye'])
+    px(g, cx + 2, cy - 4, P['eye'])
+    px(g, cx, cy - 3, P['out'])          # нос
+    px(g, cx - 1, cy - 2, (235, 235, 235))  # клыки
+    px(g, cx + 1, cy - 2, (235, 235, 235))
+    outline(g, P['out'])
+    return g
+
+
+def draw_bat_back(P, frame):
+    """Летучая мышь со спины: то же, но без морды, видна спинка."""
+    g = [[None] * GW for _ in range(GH)]
+    cx = GW // 2
+    bob = [0, -1, 0, 1][frame]
+    cy = 12 + bob
+    _bat_wings(g, P, frame, cx, cy)
+    # Тельце со спины
+    rect(g, cx - 3, cy - 1, cx + 3, cy + 8, P['skin_d'])
+    rect(g, cx - 1, cy, cx + 1, cy + 7, P['skin'])  # хребет
+    px(g, cx - 2, cy + 9, P['skin_d'])
+    px(g, cx + 2, cy + 9, P['skin_d'])
+    # Затылок и уши
+    rect(g, cx - 3, cy - 6, cx + 3, cy - 1, P['skin_d'])
+    px(g, cx - 3, cy - 8, P['skin_d'])
+    px(g, cx - 3, cy - 7, P['skin_d'])
+    px(g, cx + 3, cy - 8, P['skin_d'])
+    px(g, cx + 3, cy - 7, P['skin_d'])
+    outline(g, P['out'])
+    return g
+
+
+def draw_bat_side(P, frame):
+    """Летучая мышь в профиль (летит вправо): вытянутая морда, одно крыло."""
+    g = [[None] * GW for _ in range(GH)]
+    cx = GW // 2
+    bob = [0, -1, 0, 1][frame]
+    cy = 12 + bob
+    fold = [-1.0, -0.4, 0.6, -0.4][frame]
+    wing = P['cloth_d']
+    membrane = P['cloth']
+    # Одно крыло над телом, машет размашисто
+    span = 11
+    for dx, y_top, y_bot in _bat_wing_pts(span, fold):
+        for y in range(y_top, y_bot + 1):
+            px(g, cx + 3 - dx, cy - 3 + y, membrane if y > y_top else wing)
+    px(g, cx + 3 - span, cy - 4 + int(fold * 6), P['skin_l'])  # коготь
+    # Тельце горизонтально (летит)
+    rect(g, cx - 4, cy + 2, cx + 4, cy + 6, P['skin'])
+    rect(g, cx - 4, cy + 5, cx + 4, cy + 6, P['skin_d'])
+    # Голова впереди (справа)
+    rect(g, cx + 4, cy, cx + 8, cy + 5, P['skin'])
+    px(g, cx + 9, cy + 3, P['skin_d'])   # вытянутая мордочка
+    px(g, cx + 7, cy + 2, P['eye'])      # глаз
+    px(g, cx + 8, cy + 5, (235, 235, 235))  # клык
+    # Ухо
+    px(g, cx + 5, cy - 2, P['skin'])
+    px(g, cx + 5, cy - 1, P['skin'])
+    px(g, cx + 4, cy - 3, P['skin_d'])
+    # Хвостовая перепонка
+    px(g, cx - 5, cy + 4, P['cloth_d'])
+    px(g, cx - 6, cy + 3, P['cloth_d'])
+    outline(g, P['out'])
+    return g
+
+
 def grid_to_image(g) -> Image.Image:
     img = Image.new('RGBA', (GW, GH), (0, 0, 0, 0))
     for y in range(GH):
@@ -253,9 +390,14 @@ def generate(variant='normal', out_dir=None):
     out_dir = out_dir or f"assets/sprites/pzombie_{variant}"
     os.makedirs(out_dir, exist_ok=True)
     for i in range(4):
-        _apply_size(grid_to_image(draw_front(P, i, wings)), mod).save(f"{out_dir}/down_{i}.png")
-        _apply_size(grid_to_image(draw_back(P, i, wings)), mod).save(f"{out_dir}/up_{i}.png")
-        right = _apply_size(grid_to_image(draw_side(P, i, wings)), mod)
+        if wings:
+            # Летучая мышь: собственные функции рисования
+            front, back, side = draw_bat_front(P, i), draw_bat_back(P, i), draw_bat_side(P, i)
+        else:
+            front, back, side = draw_front(P, i), draw_back(P, i), draw_side(P, i)
+        _apply_size(grid_to_image(front), mod).save(f"{out_dir}/down_{i}.png")
+        _apply_size(grid_to_image(back), mod).save(f"{out_dir}/up_{i}.png")
+        right = _apply_size(grid_to_image(side), mod)
         right.save(f"{out_dir}/right_{i}.png")
         mirror(right).save(f"{out_dir}/left_{i}.png")
     print(f"OK {out_dir}")
