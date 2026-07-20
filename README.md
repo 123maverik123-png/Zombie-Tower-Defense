@@ -31,23 +31,11 @@ Zombies come in waves along the path to your castle. Build towers, combine eleme
 | Upgrade / Sell | Left-click on tower |
 | Walls and gates | `G` (toggle: gate/wall) |
 | Pause | `ESC` |
-| Developer console | `~` |
 
-## 🚀 Running from Source
-
-```bash
-# Python 3.12+
-pip install -r requirements.txt
-python main.py
-```
 
 Requires a GPU with **OpenGL 3.3** support (any GPU from ~2010 onward).
 
-## 📦 Building a Portable Version (Windows)
 
-```bash
-BUILD_PORTABLE.bat
-```
 
 The script will build `ZombieTowerDefense.exe` via PyInstaller, package the portable version into the `portable/` folder, and zip it.
 
