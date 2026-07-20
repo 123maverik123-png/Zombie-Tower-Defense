@@ -1,5 +1,91 @@
 # 🧟 Zombie Tower Defense
 
+A classic tower defense game about defending a castle from hordes of zombies — built in **Python + Pygame** with full GPU rendering via **ModernGL**.
+
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![Pygame](https://img.shields.io/badge/Pygame-2.5-green)
+![ModernGL](https://img.shields.io/badge/ModernGL-5.12-orange)
+![OpenGL](https://img.shields.io/badge/OpenGL-3.3-red)
+
+## 🎮 About the Game
+
+Zombies come in waves along the path to your castle. Build towers, combine elemental effects, place walls and gates — and don't let them break through.
+
+- **50 levels** with unique twisted maps
+- **9 tower types**: Sniper, Machine Gun, Flamethrower, Electric, Water, Anti-Air, Freeze, Acid, Rocket
+- **Elemental combos**: wet enemies take ×1.5 from electricity, water extinguishes burning enemies, freeze lasts longer on wet targets
+- **6 zombie types**: Normal, Runner, Tank, Night (evasion), Flying, Boss
+- **Walls and gates** — block the path and force zombies to break through
+- **Bosses every 5th level** with scaling power
+- **Tutorial first level** with hints
+- **Player profiles** with progression, Normal and Hardcore modes
+- **Map editor** — create your own levels and play them
+- **Full GPU rendering**: hundreds of enemies and thousands of particles without FPS drops
+
+## 🕹️ Controls
+
+| Action | Key |
+|---|---|
+| Select tower | Left-click on the bottom panel |
+| Build | Right-click — build mode, Left-click — place |
+| Upgrade / Sell | Left-click on tower |
+| Walls and gates | `G` (toggle: gate/wall) |
+| Pause | `ESC` |
+| Developer console | `~` |
+
+## 🚀 Running from Source
+
+```bash
+# Python 3.12+
+pip install -r requirements.txt
+python main.py
+```
+
+Requires a GPU with **OpenGL 3.3** support (any GPU from ~2010 onward).
+
+## 📦 Building a Portable Version (Windows)
+
+```bash
+BUILD_PORTABLE.bat
+```
+
+The script will build `ZombieTowerDefense.exe` via PyInstaller, package the portable version into the `portable/` folder, and zip it.
+
+## 🏗️ Architecture
+
+```
+main.py                  — Game loop, window, OpenGL context
+core/
+  opengl/                — GPU renderer: texture atlas, sprite batcher, shaders
+  states/                — Game states (menu, gameplay, pause, map editor...)
+  audio/                 — Music and sound effects
+  tile_manager/          — Map, tiles, camera
+systems/wave/            — Wave generation and management
+entities/                — Towers, enemies, projectiles, decals, walls
+data/configs/            — JSON configs for towers and enemies (balance tweaked here)
+data/levels_data.py      — 50 maps (waypoints)
+services/                — Profiles, saves
+tests/                   — pytest (including GPU core tests in headless mode)
+```
+
+Key rendering features:
+- All sprites packed into 2048×2048 texture atlases
+- One sprite batcher per frame: minimal draw calls (draw order = layer order)
+- Effects (fire, lightning, glows) — additive GPU particles
+- UI is drawn with Pygame and rendered over the scene as a single texture
+
+## ⚖️ Balance
+
+All balance is in `data/configs/towers.json` and `data/configs/enemies.json`,
+the difficulty curve is in `systems/wave/config.py`. Tweakable without touching a single line of code.
+
+## 📄 License
+
+This project was created for educational purposes. Feel free to use the code.
+
+
+
+
 Классическая tower defense про оборону замка от орд зомби — написана на **Python + Pygame** с полноценным GPU-рендерингом через **ModernGL**.
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
