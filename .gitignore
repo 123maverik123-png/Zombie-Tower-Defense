@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Сборка
+build/
+dist/
+portable/
+*.zip
+*.spec
+
+# Локальные данные игрока (не для репозитория)
+saves/
+settings.json
+profile.prof
+*.prof
+
+# Временное / служебное
+smoke_test.py
+deepseek_*.py
+.claude/
+.ses
+rtk.exe
+
+# IDE
+.vscode/
+.idea/

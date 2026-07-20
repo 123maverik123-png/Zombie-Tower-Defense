@@ -1,0 +1,188 @@
+{
+  "sniper": {
+    "id": "sniper",
+    "name": "Снайперская",
+    "cost": 100,
+    "damage": 100,
+    "fire_rate": 2.0,
+    "range_cells": 6,
+    "upgrade_cost": 150,
+    "damage_type": "physical",
+    "projectile_speed": 500,
+    "width": 64,
+    "height": 64,
+    "target_type": "ground",
+    "upgrade_stats": {
+      "level_2": { "damage_mult": 1.3, "fire_rate_mult": 1.0, "range_cells": 7 },
+      "level_3": { "damage_mult": 1.6, "fire_rate_mult": 1.0, "range_cells": 8 },
+      "level_4": { "damage_mult": 2.0, "fire_rate_mult": 0.7, "range_cells": 9, "special": "crit_damage_x2" }
+    }
+  },
+  "turret": {
+    "id": "turret",
+    "name": "Пулемёт",
+    "cost": 80,
+    "damage": 10,
+    "fire_rate": 0.20,
+    "range_cells": 4,
+    "upgrade_cost": 120,
+    "damage_type": "physical",
+    "projectile_speed": 400,
+    "width": 64,
+    "height": 64,
+    "target_type": "ground",
+    "upgrade_stats": {
+      "level_2": { "damage_mult": 2, "fire_rate_mult": 0.8, "range_cells": 4.5 },
+      "level_3": { "damage_mult": 1.3, "fire_rate_mult": 0.7, "range_cells": 5 },
+      "level_4": { "damage_mult": 1.2, "fire_rate_mult": 0.7, "range_cells": 5.5, "special": "double_shot_chance_15" }
+    }
+  },
+  "flamethrower": {
+    "id": "flamethrower",
+    "name": "Огнемёт",
+    "cost": 150,
+    "damage": 4,
+    "fire_rate": 0.1,
+    "range_cells": 2,
+    "upgrade_cost": 225,
+    "damage_type": "fire",
+    "projectile_speed": 200,
+    "aoe_radius_cells": 1.5,
+    "fire_dot_damage": 4,
+    "fire_dot_interval": 0.5,
+    "fire_dot_duration": 3.0,
+    "width": 64,
+    "height": 64,
+    "target_type": "ground",
+    "upgrade_stats": {
+      "level_2": { "damage_mult": 1.2, "fire_rate_mult": 1.0, "range_cells": 3, "aoe_radius_cells": 1.8, "fire_dot_damage": 5 },
+      "level_3": { "damage_mult": 1.4, "fire_rate_mult": 1.0, "range_cells": 3.5, "aoe_radius_cells": 2.0, "fire_dot_damage": 6, "fire_dot_duration": 4.0 },
+      "level_4": { "damage_mult": 1.6, "fire_rate_mult": 1.0, "range_cells": 4, "aoe_radius_cells": 2.5, "fire_dot_damage": 8, "fire_dot_duration": 5.0, "special": "burning_ground_duration_2" }
+    }
+  },
+  "electric": {
+    "id": "electric",
+    "name": "Электрическая",
+    "cost": 120,
+    "damage": 10,
+    "fire_rate": 1.0,
+    "range_cells": 3,
+    "upgrade_cost": 180,
+    "damage_type": "electric",
+    "projectile_speed": 600,
+    "slow_duration": 1.0,
+    "slow_multiplier": 0.5,
+    "bonus_multiplier": 1.5,
+    "width": 64,
+    "height": 64,
+    "target_type": "all",
+    "chain_count": 3,
+    "upgrade_stats": {
+      "level_2": { "damage_mult": 1.3, "fire_rate_mult": 1.0, "range_cells": 3.5, "chain_count": 5 },
+      "level_3": { "damage_mult": 1.6, "fire_rate_mult": 1.0, "range_cells": 4, "chain_count": 7 },
+      "level_4": { "damage_mult": 2.0, "fire_rate_mult": 1.0, "range_cells": 4.5, "chain_count": 10, "special": "chain_lightning" }
+    }
+  },
+  "pvo": {
+    "id": "pvo",
+    "name": "ПВО",
+    "cost": 100,
+    "damage": 15,
+    "fire_rate": 0.33,
+    "range_cells": 5,
+    "upgrade_cost": 150,
+    "damage_type": "physical",
+    "projectile_speed": 500,
+    "width": 64,
+    "height": 64,
+    "target_type": "flying",
+    "upgrade_stats": {
+      "level_2": { "damage_mult": 1.15, "fire_rate_mult": 1.15, "range_cells": 5.5 },
+      "level_3": { "damage_mult": 1.3, "fire_rate_mult": 1.3, "range_cells": 6 },
+      "level_4": { "damage_mult": 1.5, "fire_rate_mult": 1.5, "range_cells": 6.5, "special": "crit_damage_x2" }
+    }
+  },
+  "water": {
+    "id": "water",
+    "name": "Водяная",
+    "cost": 130,
+    "damage": 0,
+    "fire_rate": 0.7,
+    "range_cells": 3.5,
+    "upgrade_cost": 200,
+    "damage_type": "water",
+    "projectile_speed": 300,
+    "width": 64,
+    "height": 64,
+    "target_type": "all",
+    "effect_duration": 10.0,
+    "max_level": 2,
+    "upgrade_stats": {
+      "level_2": { "fire_rate_mult": 0.7, "range_cells": 4, "effect_duration": 12.0, "bonus_multiplier": 1.5 }
+    },
+    "bonus_multiplier": 1.3
+  },
+  "freeze": {
+    "id": "freeze",
+    "name": "Замораживающая",
+    "cost": 140,
+    "damage": 10,
+    "fire_rate": 0.5,
+    "range_cells": 3,
+    "upgrade_cost": 210,
+    "damage_type": "freeze",
+    "projectile_speed": 350,
+    "width": 64,
+    "height": 64,
+    "target_type": "ground",
+    "slow_multiplier": 0.5,
+    "slow_duration": 3.0,
+    "upgrade_stats": {
+      "level_2": { "damage_mult": 1.2, "fire_rate_mult": 1.0, "range_cells": 3.5, "slow_multiplier": 0.45, "slow_duration": 3.5 },
+      "level_3": { "damage_mult": 1.4, "fire_rate_mult": 1.0, "range_cells": 4, "slow_multiplier": 0.4, "slow_duration": 4.0 },
+      "level_4": { "damage_mult": 1.6, "fire_rate_mult": 0.7, "range_cells": 4.5, "slow_multiplier": 0.3, "slow_duration": 5.0 }
+    }
+  },
+  "acid": {
+    "id": "acid",
+    "name": "Кислотная",
+    "cost": 140,
+    "damage": 8,
+    "fire_rate": 0.8,
+    "range_cells": 3.5,
+    "upgrade_cost": 210,
+    "damage_type": "acid",
+    "projectile_speed": 400,
+    "width": 64,
+    "height": 64,
+    "target_type": "ground",
+    "acid_damage": 5,
+    "acid_interval": 0.5,
+    "acid_duration": 6.0,
+    "upgrade_stats": {
+      "level_2": { "damage_mult": 1.2, "acid_damage": 7, "range_cells": 4, "acid_duration": 7.0 },
+      "level_3": { "damage_mult": 1.4, "acid_damage": 9, "range_cells": 4.5, "acid_duration": 8.0 },
+      "level_4": { "damage_mult": 1.6, "acid_damage": 12, "range_cells": 5, "acid_duration": 10.0, "special": "acid_splash" }
+    }
+  },
+  "rocket": {
+    "id": "rocket",
+    "name": "Ракетная",
+    "cost": 180,
+    "damage": 36,
+    "fire_rate": 1.2,
+    "range_cells": 5,
+    "upgrade_cost": 270,
+    "damage_type": "explosive",
+    "projectile_speed": 250,
+    "aoe_radius_cells": 2.5,
+    "width": 64,
+    "height": 64,
+    "target_type": "ground",
+    "upgrade_stats": {
+      "level_2": { "damage_mult": 1.2, "fire_rate_mult": 1.0, "range_cells": 5.5, "aoe_radius_cells": 3.0 },
+      "level_3": { "damage_mult": 1.4, "fire_rate_mult": 1.0, "range_cells": 6, "aoe_radius_cells": 3.5 },
+      "level_4": { "damage_mult": 1.6, "fire_rate_mult": 0.7, "range_cells": 6.5, "aoe_radius_cells": 4.0, "special": "rocket_rain" }
+    }
+  }
+}

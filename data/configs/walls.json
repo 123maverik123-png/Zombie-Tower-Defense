@@ -1,0 +1,21 @@
+{
+  "gate": {
+    "id": "gate",
+    "name": "Ворота",
+    "cost": 150,
+    "hp": 500,
+    "width": 50,
+    "height": 50,
+    "placement": "road",
+    "min_distance_from_portal": 10
+  },
+  "wall": {
+    "id": "wall",
+    "name": "Стена",
+    "cost": 80,
+    "hp": 200,
+    "width": 40,
+    "height": 40,
+    "placement": "any"
+  }
+}

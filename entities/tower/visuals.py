@@ -1,0 +1,168 @@
+# entities/tower/visuals.py
+import pygame
+import random
+import math
+from services.resource_loader import ResourceLoader
+
+
+class TowerVisuals:
+    """Управление отрисовкой башни"""
+    
+    def __init__(self, tower):
+        self.tower = tower
+        self.image = None
+        self._spark_timer = 0.0
+    
+    def load_image(self):
+        tower = self.tower
+        try:
+            from core.graphics_theme import towers_dir
+            loader = ResourceLoader()
+            image_name = f"{towers_dir()}/{tower.id}/level_{tower.upgrades.level}.png"
+            self.image = loader.load_image(image_name, scale=(tower.width, tower.height))
+        except Exception:
+            self.image = self._create_fallback_image()
+    
+    def _create_fallback_image(self) -> pygame.Surface:
+        tower = self.tower
+        surf = pygame.Surface((tower.width, tower.height), pygame.SRCALPHA)
+        
+        level_colors = {
+            1: (50, 150, 200),
+            2: (100, 200, 100),
+            3: (200, 150, 50),
+            4: (200, 50, 200)
+        }
+        color = level_colors.get(tower.upgrades.level, (150, 150, 150))
+        pygame.draw.rect(surf, color, (0, 0, tower.width, tower.height))
+        font = pygame.font.Font(None, 30)
+        text = font.render(str(tower.upgrades.level), True, (255, 255, 255))
+        surf.blit(text, (tower.width//2 - text.get_width()//2, tower.height//2 - text.get_height()//2))
+        return surf
+    
+    def get_texture_name(self) -> str:
+        return f"tower_{self.tower.id}_{self.tower.upgrades.level}"
+
+    # ===== GPU-ПУТЬ =====
+
+    _level_text_cache = {}
+
+    def draw_batch(self, renderer, offset_x: int = 0, offset_y: int = 0):
+        """Рисует башню через GPU-батч. Струя огнемёта — отдельно, через частицы."""
+        tower = self.tower
+        if not tower.alive:
+            return
+
+        cx = tower.x + offset_x
+        cy = tower.y + offset_y
+
+        # Тень под башней
+        shadow = renderer.get_region('__shadow__')
+        if shadow:
+            renderer.batch.draw(shadow, cx + 3, cy + tower.height * 0.42,
+                                tower.width * 0.9, tower.height * 0.3,
+                                color=(255, 255, 255, 80))
+
+        name = self.get_texture_name()
+        if not renderer.has_texture(name):
+            if self.image is None:
+                self.load_image()
+            renderer.load_texture(name, self.image or self._create_fallback_image())
+        region = renderer.get_region(name)
+        renderer.batch.draw(region, cx, cy, tower.width, tower.height)
+
+        # Текст уровня — кэш отрендеренных надписей в атласе
+        level = tower.upgrades.level
+        text_name = f"__lvl_text_{level}"
+        if not renderer.has_texture(text_name):
+            font = TowerVisuals._level_text_cache.get('font')
+            if font is None:
+                font = pygame.font.Font(None, 16)
+                TowerVisuals._level_text_cache['font'] = font
+            renderer.load_texture(text_name, font.render(f"Lv.{level}", True, (255, 215, 0)))
+        text_region = renderer.get_region(text_name)
+        renderer.batch.draw(text_region, cx, cy - tower.height // 2 - 20 + text_region.h // 2,
+                            text_region.w, text_region.h)
+    
+    def draw_flame_batch(self, renderer, offset_x: int = 0, offset_y: int = 0):
+        """GPU-версия струи огнемёта: аддитивные мягкие круги вдоль луча."""
+        tower = self.tower
+        if not tower.alive or tower.id != 'flamethrower' or not tower.flame_target:
+            return
+
+        target = tower.flame_target
+        if not target or not target.alive:
+            return
+
+        from core.opengl.batch import BLEND_ADDITIVE
+        batch = renderer.batch
+        soft = renderer.get_region('__soft__')
+        dot = renderer.get_region('__dot__')
+
+        start_x = tower.x + offset_x
+        start_y = tower.y + offset_y
+        end_x = target.x + offset_x
+        end_y = target.y + offset_y
+
+        dx = end_x - start_x
+        dy = end_y - start_y
+        distance = math.hypot(dx, dy)
+        if distance < 10:
+            return
+
+        dx /= distance
+        dy /= distance
+        end_x -= dx * 20
+        end_y -= dy * 20
+
+        steps = max(6, int(distance / 10))
+        time = pygame.time.get_ticks() / 100
+        spark_count = min(5, 3 + tower.flame_level)
+
+        # Тело струи
+        for i in range(steps):
+            t = i / steps
+            x = start_x + (end_x - start_x) * t
+            y = start_y + (end_y - start_y) * t
+
+            noise_x = random.uniform(-4, 4) * (1 - t * 0.3)
+            noise_y = random.uniform(-4, 4) * (1 - t * 0.3)
+
+            width = max(3, int((6 + tower.flame_level) * (1 - t * 0.3)))
+
+            r = 255
+            g = max(0, min(255, int(200 - 180 * t)))
+            b = max(0, min(255, int(40 - 40 * t)))
+            alpha = max(60, min(255, int(200 * (1 - t * 0.2))))
+
+            batch.draw(soft, x + noise_x, y + noise_y, width * 2, width * 2,
+                       color=(r, g, b, alpha), blend=BLEND_ADDITIVE)
+
+        # Яркое ядро у сопла
+        for i in range(4):
+            t = i / 10
+            x = start_x + (end_x - start_x) * t * 0.5
+            y = start_y + (end_y - start_y) * t * 0.5
+            noise_x = random.uniform(-3, 3) * (1 - t)
+            noise_y = random.uniform(-3, 3) * (1 - t)
+            size = max(2, int(5 * (1 - t * 0.4)) + random.randint(0, 1))
+            alpha = int(180 * (1 - t * 0.3))
+            batch.draw(soft, x + noise_x, y + noise_y, size * 2, size * 2,
+                       color=(255, 255, 200, alpha), blend=BLEND_ADDITIVE)
+
+        # Искры
+        if self._spark_timer <= 0:
+            self._spark_timer = 0.1
+            for i in range(spark_count):
+                t = random.uniform(0.1, 0.9)
+                x = start_x + (end_x - start_x) * t
+                y = start_y + (end_y - start_y) * t
+                spread = 10 * (1 - t * 0.3)
+                x += math.sin(time + i * 1.5) * spread
+                y += math.cos(time * 1.2 + i * 2.1) * spread
+                size = random.randint(2, 4)
+                batch.draw(dot, x, y, size, size,
+                           color=(255, 200, 100, 255), blend=BLEND_ADDITIVE)
+        else:
+            self._spark_timer -= 0.016
+    
