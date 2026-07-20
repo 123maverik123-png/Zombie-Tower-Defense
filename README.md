@@ -71,6 +71,22 @@ the difficulty curve is in `systems/wave/config.py`. Tweakable without touching 
 
 This project was created for educational purposes. Feel free to use the code.
 
+The game currently has **17,189 lines** of Python code across **147 files** (not counting caches, builds, and portable copies).
+
+Breakdown by module:
+
+| Module | Lines | Description |
+|--------|-------|-------------|
+| **core/** | 8,593 | States, GPU renderer, audio, map, console |
+| **entities/** | 3,758 | Towers, enemies, projectiles, decals, walls |
+| **ui/** | 1,563 | Panels, settings, level select |
+| **root** (main.py etc.) | 831 | Game loop, sound generation, level building |
+| **data/** | 725 | 50 level maps (waypoints) |
+| **services/** | 584 | Profiles, saves |
+| **systems/** | 523 | Wave generation and management |
+| **utils/** | 363 | Sprite loader |
+| **tests/** | 246 | Tests, including GPU core |
+
 
 
 
@@ -156,3 +172,7 @@ tests/                   — pytest (включая тесты GPU-ядра в h
 ## 📄 Лицензия
 
 Проект создан в учебных целях. Используйте код свободно.
+
+
+
+
