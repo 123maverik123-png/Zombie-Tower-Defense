@@ -29,11 +29,14 @@ class EntitiesDraw:
             if not enemy.states.is_dead():
                 sx, sy = enemy.x + ox, enemy.y + oy
                 if -100 < sx < screen_w + 100 and -100 < sy < screen_h + 100:
-                    # Трупы — на земле, под всеми стоящими
-                    if enemy.alive:
-                        sort_y = enemy.y + enemy.height * 0.5
-                    else:
+                    # Трупы — на земле, под всеми стоящими;
+                    # летающие — в воздухе, поверх всех стоящих
+                    if not enemy.alive:
                         sort_y = -10000 + enemy.y
+                    elif enemy.is_flying:
+                        sort_y = 10000 + enemy.y
+                    else:
+                        sort_y = enemy.y + enemy.height * 0.5
                     drawables.append((sort_y,
                                       lambda e=enemy: e.visuals.draw_batch(renderer, ox, oy)))
 

@@ -63,8 +63,9 @@ class Enemy(Entity):
             base_height = first_frame.get_height()
 
             if self.is_flying:
-                self.width = int(base_width * 0.35)
-                self.height = int(base_height * 0.35)
+                # Летучая мышь крупная, парит над полем
+                self.width = int(base_width * 1.05)
+                self.height = int(base_height * 1.05)
             else:
                 self.width = base_width
                 self.height = base_height

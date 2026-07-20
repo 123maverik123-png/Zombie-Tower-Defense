@@ -125,7 +125,7 @@ class EnemyVisuals:
             return
 
         if enemy.is_flying:
-            self.float_offset = math.sin(pygame.time.get_ticks() / 500) * 5
+            self.float_offset = math.sin(pygame.time.get_ticks() / 500) * 8
 
         cx = enemy.x + offset_x
         cy = enemy.y + offset_y
@@ -133,12 +133,12 @@ class EnemyVisuals:
         # Эффекты ПОД врагом
         self._batch_effects_below(renderer, cx, cy)
 
-        # Тень (у всех врагов; у летающих — меньше и дальше)
+        # Тень (у всех врагов; у летающих — на земле, далеко под мышью)
         shadow = renderer.get_region('__shadow__')
         if shadow:
             if enemy.is_flying:
-                batch.draw(shadow, cx, cy + enemy.height // 2, 30, 10,
-                           color=(255, 255, 255, 60))
+                batch.draw(shadow, cx, cy + enemy.height // 2, 44, 14,
+                           color=(255, 255, 255, 45))
             else:
                 sw = enemy.width * 0.72
                 batch.draw(shadow, cx, cy + enemy.height * 0.06, sw, sw * 0.36,
@@ -150,8 +150,9 @@ class EnemyVisuals:
         w, h = enemy.width, enemy.height
         draw_x = cx - w // 2
         draw_y = cy - h // 1.2 + float_y
-        if enemy.is_flying and h > 100:
-            draw_y -= h * 0.15
+        if enemy.is_flying:
+            # Летит высоко над головами наземных
+            draw_y -= h * 0.55
 
         batch.draw(region, draw_x, draw_y, w, h, centered=False)
 
@@ -262,6 +263,9 @@ class EnemyVisuals:
 
         x = cx - bar_width // 2
         y = cy - enemy.height // 2 - 45 + float_y
+        if enemy.is_flying:
+            # Полоска над мышью с учётом высоты полёта
+            y -= enemy.height * 0.55
 
         if enemy.is_boss:
             batch.draw_rect(x, y, bar_width, bar_height, (100, 50, 0, 255))
