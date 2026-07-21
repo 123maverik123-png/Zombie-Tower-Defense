@@ -194,6 +194,20 @@ class InputEvents:
             if tower_rect.collidepoint(pos):
                 state.tower_ui.show(tower, (tower.x, tower.y))
                 return
+
+        # 3b. Клик по стене/воротам — то же меню улучшения/продажи.
+        # Не в режиме строительства, чтобы не мешать постройке.
+        if not state.wall_placement_mode:
+            for fort in list(state.gates) + list(state.walls):
+                ds = getattr(fort, 'draw_size', max(fort.width, fort.height))
+                fort_rect = pygame.Rect(
+                    fort.x + offset_x - ds // 2,
+                    fort.y + offset_y - ds // 2,
+                    ds, ds
+                )
+                if fort_rect.collidepoint(pos):
+                    state.tower_ui.show(fort, (fort.x, fort.y))
+                    return
         
         # 4. Если кликнули по пустому месту — скрываем UI
         state.tower_ui.hide()

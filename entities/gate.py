@@ -3,6 +3,7 @@ import pygame
 import random
 from entities.base import Entity
 from services.resource_loader import ResourceLoader
+from entities.wall import FortifyUpgrades
 
 class Gate(Entity):
     """Ворота — блокируют путь, не ближе 10 клеток к порталу."""
@@ -24,6 +25,7 @@ class Gate(Entity):
         self.rect = pygame.Rect(x - self.width//2, y - self.height//2, self.width, self.height)
         self.is_gate = True
         self.orientation = orientation if orientation in ('h', 'v') else 'h'
+        self.upgrades = FortifyUpgrades(self, base_cost=150, upgrade_cost=120, hp_add=350)
 
         self._create_image()
 

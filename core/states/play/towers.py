@@ -203,11 +203,15 @@ class PlayTowers:
     
     def upgrade_tower(self, tower):
         state = self.state
-        
+
         if tower.upgrades.level < tower.upgrades.max_level:
             cost = tower.upgrades.upgrade_cost
             if state.player.spend_gold(cost):
-                tower.upgrade()
+                # Башни: tower.upgrade(); стены/ворота: upgrades.upgrade()
+                if hasattr(tower, 'upgrade'):
+                    tower.upgrade()
+                else:
+                    tower.upgrades.upgrade()
                 state.tower_ui.hide()
                 state.audio.play_sound("tower_build")
                 state.feedback_logic.show_success(tower.x, tower.y)
@@ -218,22 +222,24 @@ class PlayTowers:
         else:
             state.feedback_logic.show_error(tower.x, tower.y, "MAX LEVEL!")
             return False
-    
+
     def sell_tower(self, tower):
         state = self.state
-        
+
         total_cost = tower.upgrades.cost
         for level in range(2, tower.upgrades.level + 1):
             total_cost += int(tower.upgrades.cost * (1.5 ** (level - 2)))
-        
+
         sell_price = int(total_cost * 0.5)
         state.player.gold += sell_price
-        
-        if tower in state.towers:
-            state.towers.remove(tower)
-        
+
+        # Убираем из нужного списка: башни / стены / ворота
+        for lst in (state.towers, state.walls, state.gates):
+            if tower in lst:
+                lst.remove(tower)
+                break
+
         state.tower_ui.hide()
         state.audio.play_sound("button_click")
         state.feedback_logic.show_success(tower.x, tower.y)
-        print(f"💰 Tower sold for ${sell_price}!")
         return True

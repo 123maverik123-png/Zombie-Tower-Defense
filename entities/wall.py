@@ -7,6 +7,29 @@ from services.resource_loader import ResourceLoader
 WALL_VARIANTS = ('h', 'v', 'tl', 'tr', 'bl', 'br')
 
 
+class FortifyUpgrades:
+    """Уровни прочности стены/ворот (совместимо с TowerUI: level/cost/upgrade)."""
+
+    def __init__(self, entity, base_cost, upgrade_cost, hp_add):
+        self.entity = entity
+        self.level = 1
+        self.max_level = 4
+        self.cost = base_cost
+        self.upgrade_cost = upgrade_cost
+        self._hp_add = hp_add
+        self.special_effect = None
+
+    def upgrade(self) -> bool:
+        if self.level >= self.max_level:
+            return False
+        e = self.entity
+        e.max_health += self._hp_add
+        e.health = e.max_health  # апгрейд заодно чинит
+        self.level += 1
+        self.upgrade_cost = int(self.upgrade_cost * 1.4)
+        return True
+
+
 class Wall(Entity):
     """Обычная стена — блокирует путь, может быть атакована зомби."""
 
@@ -27,6 +50,7 @@ class Wall(Entity):
         self.rect = pygame.Rect(x - self.width//2, y - self.height//2, self.width, self.height)
         self.is_gate = False
         self.variant = variant if variant in WALL_VARIANTS else 'h'
+        self.upgrades = FortifyUpgrades(self, base_cost=80, upgrade_cost=60, hp_add=150)
 
         self._create_image()
 
