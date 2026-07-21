@@ -25,6 +25,46 @@ ENEMY_FIELDS = [
     "slow_resistance",
 ]
 
+# Спецификация ползунка для каждого поля: (min, max, step, is_int).
+# Шаг у каждого пункта свой. Диапазоны щедрые — можно потом подвинуть.
+FIELD_SPEC = {
+    # --- Башни ---
+    "cost":              (0, 500, 5, True),
+    "damage":            (0, 300, 0.5, False),
+    "fire_rate":         (0.05, 3.0, 0.05, False),
+    "range_cells":       (1, 12, 0.5, False),
+    "upgrade_cost":      (0, 800, 10, True),
+    "aoe_radius_cells":  (0, 6, 0.1, False),
+    "projectile_speed":  (50, 600, 10, True),
+    "fire_dot_damage":   (0, 40, 0.5, False),
+    "fire_dot_interval": (0.1, 2.0, 0.1, False),
+    "fire_dot_duration": (0.5, 12, 0.5, False),
+    "acid_damage":       (0, 50, 0.5, False),
+    "acid_interval":     (0.1, 2.0, 0.1, False),
+    "acid_duration":     (0.5, 15, 0.5, False),
+    # --- Враги ---
+    "health":            (0, 3000, 10, True),
+    "speed":             (0, 400, 5, True),
+    "reward_gold":       (0, 300, 1, True),
+    "reward_exp":        (0, 150, 1, True),
+    "base_damage":       (0, 30, 1, True),
+    "slow_resistance":   (0, 1, 0.05, False),
+}
+
+
+def snap(value, field):
+    """Приводит значение к шагу поля и его типу (int/float)."""
+    spec = FIELD_SPEC.get(field)
+    if not spec:
+        return value
+    lo, hi, step, is_int = spec
+    value = max(lo, min(hi, value))
+    snapped = round(value / step) * step
+    if is_int:
+        return int(round(snapped))
+    return round(snapped, 4)
+
+
 
 class BalanceModel:
     """Загрузка/сохранение конфигов баланса с бэкапом оригиналов."""
