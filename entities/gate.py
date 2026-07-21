@@ -7,7 +7,7 @@ from services.resource_loader import ResourceLoader
 class Gate(Entity):
     """Ворота — блокируют путь, не ближе 10 клеток к порталу."""
 
-    def __init__(self, x: float, y: float, hp: int = 500, orientation: str = 'h'):
+    def __init__(self, x: float, y: float, hp: int = 500, orientation: str = 'h', tile_size: int = 65):
         super().__init__(
             entity_id='gate',
             x=x,
@@ -19,6 +19,8 @@ class Gate(Entity):
         self.alive = True
         self.width = 50
         self.height = 50
+        # Визуальный размер = полный тайл, чтобы стены/ворота соприкасались
+        self.draw_size = tile_size
         self.rect = pygame.Rect(x - self.width//2, y - self.height//2, self.width, self.height)
         self.is_gate = True
         self.orientation = orientation if orientation in ('h', 'v') else 'h'
@@ -31,7 +33,7 @@ class Gate(Entity):
             loader = ResourceLoader()
             self.image = loader.load_image(
                 f"fortify/gate_{self.orientation}.png",
-                scale=(self.width, self.height))
+                scale=(self.draw_size, self.draw_size))
             return
         except Exception:
             pass
@@ -72,8 +74,9 @@ class Gate(Entity):
         if not self.alive:
             return
         if self.image:
-            screen.blit(self.image, (self.x + offset_x - self.width//2,
-                                    self.y + offset_y - self.height//2))
+            iw, ih = self.image.get_size()
+            screen.blit(self.image, (self.x + offset_x - iw//2,
+                                    self.y + offset_y - ih//2))
 
         if self.health < self.max_health:
             bar_w = self.width
@@ -95,7 +98,8 @@ class Gate(Entity):
         name = f"gate_{self.orientation}_{int(self.x)}_{int(self.y)}"
         if not renderer.has_texture(name):
             renderer.load_texture(name, self.image)
-        batch.draw(renderer.get_region(name), cx, cy, self.width, self.height)
+        ds = getattr(self, 'draw_size', self.width)
+        batch.draw(renderer.get_region(name), cx, cy, ds, ds)
 
         if self.health < self.max_health:
             bar_w = self.width

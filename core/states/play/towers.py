@@ -18,7 +18,12 @@ class PlayTowers:
 
         road_v (дорога идёт вертикально) → ворота 'h' поперёк; road_h → 'v'.
         Для поворотов смотрим, с какой стороны есть дорожные соседи.
+        Ручной оверрайд (колесо мыши) имеет приоритет над авто.
         """
+        override = getattr(self.state, 'gate_orientation_override', None)
+        if override in ('h', 'v'):
+            return override
+
         tm = self.state.tile_manager
         tile = tm.map_data[wy][wx]
         if tile == 'road_v':
@@ -162,7 +167,7 @@ class PlayTowers:
             gate_x = wx * tile_size + tile_size // 2
             gate_y = wy * tile_size + tile_size // 2
             
-            gate = Gate(gate_x, gate_y, 500, self._gate_orientation(wx, wy))
+            gate = Gate(gate_x, gate_y, 500, self._gate_orientation(wx, wy), tile_size)
             state.gates.append(gate)
             
             state.audio.play_sound("tower_build")
@@ -187,7 +192,7 @@ class PlayTowers:
             wall_x = wx * tile_size + tile_size // 2
             wall_y = wy * tile_size + tile_size // 2
             
-            wall = Wall(wall_x, wall_y, 200, getattr(state, 'selected_wall_variant', 'h'))
+            wall = Wall(wall_x, wall_y, 200, getattr(state, 'selected_wall_variant', 'h'), tile_size)
             state.walls.append(wall)
             
             state.audio.play_sound("tower_build")

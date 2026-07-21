@@ -112,8 +112,7 @@ class PreviewDraw:
             try:
                 from services.resource_loader import ResourceLoader
                 base = ResourceLoader().load_image(f"fortify/{sprite_name}.png")
-                size = int(tile_size * 0.78)
-                img = pygame.transform.scale(base, (size, size)).convert_alpha()
+                img = pygame.transform.scale(base, (tile_size, tile_size)).convert_alpha()
                 img.set_alpha(150)
                 self._ghost_cache[(sprite_name, tile_size)] = img
             except Exception:
