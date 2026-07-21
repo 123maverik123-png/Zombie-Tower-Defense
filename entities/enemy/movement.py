@@ -138,9 +138,9 @@ class EnemyMovement:
                 enemy.current_target_index += 1
             self.stuck_timer = 0
         else:
-            self.stuck_timer += dt
-            if self.stuck_timer > self.stuck_threshold:
-                self._try_attack_nearby_wall()
+            # Упёрлись в стену/ворота — сразу пытаемся атаковать блокирующее
+            # препятствие (без порога ожидания, иначе зомби застревает).
+            self._try_attack_nearby_wall()
         
         enemy.rect.x = enemy.x - enemy.width // 2
         enemy.rect.y = enemy.y - enemy.height // 2
@@ -342,32 +342,44 @@ class EnemyMovement:
         enemy.image = enemy.visuals.get_current_frame()
     
     def _try_attack_nearby_wall(self):
-        """Пытается найти ближайшую стену для атаки."""
+        """Атакует ближайшую свободную стену; если не дотягивается — подходит.
+
+        Вызывается когда зомби упёрся в препятствие. Считаем стену занятой,
+        если её уже атакует или к ней назначен другой зомби (1 на стену).
+        """
         enemy = self.enemy
         if not enemy.state:
             return
-        
+
         nearest_wall = None
         nearest_dist = float('inf')
         for wall in enemy.state.walls:
             if not wall.alive:
                 continue
-            is_attacked = False
-            for other_enemy in enemy.state.enemies:
-                if other_enemy == enemy:
+            # занята другим зомби?
+            taken = False
+            for other in enemy.state.enemies:
+                if other is enemy or not other.alive:
                     continue
-                if other_enemy.combat.target_wall == wall and other_enemy.combat.is_attacking_wall:
-                    is_attacked = True
+                oc = other.combat
+                if (oc.target_wall is wall and oc.is_attacking_wall) or oc.assigned_wall is wall:
+                    taken = True
                     break
-            if is_attacked:
+            if taken:
                 continue
             dist = ((enemy.x - wall.x) ** 2 + (enemy.y - wall.y) ** 2) ** 0.5
             if dist < nearest_dist:
                 nearest_dist = dist
                 nearest_wall = wall
-        
-        if nearest_wall:
+
+        if nearest_wall is None:
+            return
+        if enemy.combat.can_attack_wall(nearest_wall):
             enemy.combat.attack_wall(nearest_wall, 0)
+        else:
+            # рядом стена, но чуть не дотянулись — подходим к ней
+            enemy.combat.assigned_wall = nearest_wall
+            self._move_toward(nearest_wall.x, nearest_wall.y)
     
     def _check_collision(self, new_x: float, new_y: float) -> bool:
         """Проверяет коллизию с воротами и стенами."""

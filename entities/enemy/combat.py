@@ -131,12 +131,18 @@ class EnemyCombat:
         return actual_damage
     
     def can_attack_wall(self, wall) -> bool:
-        """Проверяет, может ли враг атаковать стену (достаточно близко)"""
+        """Проверяет, может ли враг атаковать стену (достаточно близко).
+
+        Порог по ВИЗУАЛЬНОМУ размеру стены (draw_size), а не хитбоксу
+        коллизии — иначе зомби у края дороги упирается в невидимую границу
+        и не дотягивается до атаки.
+        """
         enemy = self.enemy
         if not wall or not wall.alive:
             return False
+        half = getattr(wall, 'draw_size', wall.width) // 2
         dist = ((enemy.x - wall.x) ** 2 + (enemy.y - wall.y) ** 2) ** 0.5
-        return dist < self.attack_range + wall.width // 2
+        return dist < self.attack_range + half
     
     def attack_wall(self, wall, dt: float) -> bool:
         """Атакует стену."""
