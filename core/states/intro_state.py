@@ -70,19 +70,26 @@ DEFAULT_LEVEL_SUBTITLE = "Орда наступает. Держи оборону
 #   shake   — сила тряски земли 0..1 (осада)
 #   embers  — падающие угли/пепел 0..1 (атмосфера разрушения)
 #   tint    — цветовой оттенок оверлея сцены (r,g,b)
+#   towers  — список башен обороны на переднем плане (стреляют по орде)
 SLIDE_SCENES = [
     # 1. Мир держался на свете Кристалла — только кристалл, покой.
-    dict(portal=None, crystal=1.0, zombies=0.0, shake=0.0, embers=0.0, tint=(20, 30, 45)),
+    dict(portal=None, crystal=1.0, zombies=0.0, shake=0.0, embers=0.0,
+         tint=(20, 30, 45), towers=[]),
     # 2. Печать треснула — портал едва проступает, кристалл тускнеет.
-    dict(portal=0.25, crystal=0.7, zombies=0.0, shake=0.05, embers=0.15, tint=(40, 20, 40)),
-    # 3. Портал разорвал землю — полностью открыт, первые зомби.
-    dict(portal=1.0, crystal=0.55, zombies=0.35, shake=0.2, embers=0.4, tint=(60, 16, 30)),
-    # 4. Орда идёт к Кристаллу — плотный марш через весь кадр.
-    dict(portal=1.0, crystal=0.5, zombies=1.0, shake=0.15, embers=0.5, tint=(55, 14, 22)),
-    # 5. Стены пали — осада, тряска, густой пепел, кристалл почти гаснет.
-    dict(portal=0.7, crystal=0.3, zombies=0.8, shake=0.6, embers=0.9, tint=(45, 10, 14)),
-    # 6. Последний хранитель — кристалл вспыхивает ярко, оборона.
-    dict(portal=0.5, crystal=1.0, zombies=0.5, shake=0.1, embers=0.3, tint=(20, 34, 50)),
+    dict(portal=0.25, crystal=0.7, zombies=0.0, shake=0.05, embers=0.15,
+         tint=(40, 20, 40), towers=[]),
+    # 3. Портал разорвал землю — первые зомби, первая башня встаёт.
+    dict(portal=1.0, crystal=0.55, zombies=0.35, shake=0.2, embers=0.4,
+         tint=(60, 16, 30), towers=['turret']),
+    # 4. Орда идёт к Кристаллу — оборона отвечает: пулемёт + снайпер.
+    dict(portal=1.0, crystal=0.5, zombies=1.0, shake=0.15, embers=0.5,
+         tint=(55, 14, 22), towers=['turret', 'sniper', 'electric']),
+    # 5. Стены пали — полный залп всех башен по осаждающей орде.
+    dict(portal=0.7, crystal=0.3, zombies=0.8, shake=0.6, embers=0.9,
+         tint=(45, 10, 14), towers=['turret', 'sniper', 'rocket', 'flamethrower', 'freeze']),
+    # 6. Последний хранитель — кристалл вспыхивает, оборона держит рубеж.
+    dict(portal=0.5, crystal=1.0, zombies=0.5, shake=0.1, embers=0.3,
+         tint=(20, 34, 50), towers=['turret', 'electric', 'freeze']),
 ]
 
 
@@ -222,6 +229,17 @@ class IntroState(State):
             img = self._try_load(f"assets/sprites/pzombie_normal/right_{i}.png")
             if img:
                 self.zombie_imgs.append(img)
+        self._load_towers()
+
+    def _load_towers(self):
+        """Базы башен (+ головы, где есть) для сцен обороны."""
+        self.towers = {}
+        for t in ('turret', 'sniper', 'rocket', 'electric', 'freeze', 'flamethrower'):
+            base = self._try_load(f"assets/images/towers_pixel/{t}/level_1.png")
+            if not base:
+                continue
+            head = self._try_load(f"assets/images/towers_pixel/{t}/head_1.png")
+            self.towers[t] = {'base': base, 'head': head}
 
     def _circular(self, img):
         """Вырезает круг из квадратного тайла, убирая фон дороги/травы
@@ -314,7 +332,7 @@ class IntroState(State):
         нейтральная сцена (кристалл + слабый портал)."""
         if self.mode != 'long':
             return dict(portal=0.6, crystal=1.0, zombies=0.0, shake=0.0,
-                        embers=0.2, tint=(24, 32, 46))
+                        embers=0.2, tint=(24, 32, 46), towers=[])
         idx = self.timeline.current_slide()
         if idx is None:
             idx = 0
@@ -350,6 +368,8 @@ class IntroState(State):
             out['portal'] = 0.0
         if cur.get('crystal') is None and nxt.get('crystal') is None:
             out['crystal'] = 0.0
+        # towers — список, не интерполируем: берём из текущего слайда
+        out['towers'] = cur.get('towers', [])
         return out
 
     def _draw_scene(self, screen, sw, sh, dim=170):
@@ -403,6 +423,11 @@ class IntroState(State):
         if self.zombie_imgs and z_density > 0.02:
             self._draw_marching_zombies(screen, sw, sh, cy, t, z_density, ox)
 
+        # Башни обороны на переднем плане + их атаки по орде.
+        towers = sc.get('towers', [])
+        if towers and self.towers:
+            self._draw_towers(screen, sw, sh, t, towers, ox, oy, z_density)
+
         # Падающий пепел/угли — атмосфера разрушения.
         embers = sc.get('embers', 0.0)
         if embers > 0.02:
@@ -429,6 +454,126 @@ class IntroState(State):
             dark.fill((25, 20, 30, 255), special_flags=pygame.BLEND_RGBA_MULT)
             dark.set_alpha(alpha)
             screen.blit(dark, (int(zx - zsize // 2), int(zy - zsize // 2)))
+
+    def _draw_towers(self, screen, sw, sh, t, tower_ids, ox, oy, density):
+        """Башни обороны вдоль переднего плана. Головы (где есть) целятся
+        в ближайшую цель, из ствола бьёт атака по типу башни."""
+        n = len(tower_ids)
+        tsize = int(sh * 0.14)
+        base_y = int(sh * 0.80) + oy
+        # Равномерно раскладываем башни по нижней трети экрана.
+        for i, tid in enumerate(tower_ids):
+            spec = self.towers.get(tid)
+            if not spec:
+                continue
+            frac = (i + 0.5) / n
+            tx = int(sw * (0.14 + 0.62 * frac)) + ox
+            ty = base_y
+
+            # Цель атаки — точка выше и левее (там идёт орда), своя фаза.
+            aim_x = tx - int(sw * 0.05) + int(math.sin(t * 0.9 + i) * sw * 0.04)
+            aim_y = ty - int(sh * 0.14) - int(sh * 0.05 * abs(math.sin(t * 1.3 + i)))
+            angle = math.degrees(math.atan2(ty - aim_y, aim_x - tx))
+
+            # Ритм выстрелов у каждой башни свой.
+            fire_period = {'turret': 0.35, 'sniper': 1.1, 'rocket': 1.4,
+                           'electric': 0.7, 'freeze': 0.9,
+                           'flamethrower': 0.12}.get(tid, 0.6)
+            phase = (t + i * 0.3) % fire_period
+            firing = phase < fire_period * 0.45
+
+            # База башни.
+            base = pygame.transform.smoothscale(spec['base'], (tsize, tsize))
+            screen.blit(base, (tx - tsize // 2, ty - tsize // 2))
+
+            # Голова (ствол) — поворачиваем к цели, где есть.
+            head = spec.get('head')
+            if head:
+                h = pygame.transform.smoothscale(head, (tsize, tsize))
+                h = pygame.transform.rotate(h, angle)
+                hr = h.get_rect(center=(tx, ty - int(tsize * 0.08)))
+                screen.blit(h, hr.topleft)
+
+            # Атака — своя для каждого типа башни.
+            if firing:
+                self._draw_attack(screen, tid, tx, ty - int(tsize * 0.1),
+                                  aim_x, aim_y, t, i, phase / fire_period)
+
+    def _draw_attack(self, screen, tid, sx, sy, ex, ey, t, seed, prog):
+        """Визуал атаки от (sx,sy) к (ex,ey) по типу башни."""
+        if tid == 'turret':
+            # Быстрые трассеры-очереди.
+            for k in range(2):
+                p = (prog + k * 0.5) % 1.0
+                bx = int(sx + (ex - sx) * p)
+                by = int(sy + (ey - sy) * p)
+                pygame.draw.circle(screen, (255, 230, 120), (bx, by), 3)
+            self._muzzle(screen, sx, sy, (255, 220, 130), 10)
+
+        elif tid == 'sniper':
+            # Тонкий яркий луч-выстрел на всю дистанцию.
+            a = int(220 * (1.0 - prog))
+            self._beam(screen, sx, sy, ex, ey, (255, 245, 200), 2, a)
+            self._muzzle(screen, sx, sy, (255, 255, 220), 14)
+
+        elif tid == 'electric':
+            # Ломаная молния.
+            self._lightning(screen, sx, sy, ex, ey, t, seed)
+            self._muzzle(screen, sx, sy, (150, 220, 255), 12)
+
+        elif tid == 'rocket':
+            # Летящая ракета + вспышка на конце в конце траектории.
+            p = prog
+            bx = int(sx + (ex - sx) * p)
+            by = int(sy + (ey - sy) * p)
+            pygame.draw.circle(screen, (255, 160, 60), (bx, by), 5)
+            pygame.draw.circle(screen, (255, 220, 150), (bx, by), 2)
+            if p > 0.8:
+                r = int(18 * (p - 0.8) / 0.2)
+                self._blit_glow(screen, (ex, ey), max(4, r), (255, 130, 40), 160)
+
+        elif tid == 'freeze':
+            # Ледяной конус — бледно-голубые осколки к цели.
+            for k in range(5):
+                p = (prog + k * 0.2) % 1.0
+                bx = int(sx + (ex - sx) * p + math.sin(t * 6 + k) * 6)
+                by = int(sy + (ey - sy) * p)
+                pygame.draw.circle(screen, (180, 235, 255), (bx, by), 2)
+            self._muzzle(screen, sx, sy, (200, 240, 255), 10)
+
+        elif tid == 'flamethrower':
+            # Струя огня — расширяющийся язык оранжевых частиц.
+            for k in range(8):
+                p = k / 8.0
+                spread = int(p * 14)
+                bx = int(sx + (ex - sx) * p + math.sin(t * 9 + k) * spread)
+                by = int(sy + (ey - sy) * p + math.cos(t * 7 + k) * spread * 0.5)
+                col = (255, int(160 - p * 90), 40)
+                pygame.draw.circle(screen, col, (bx, by), max(2, int(6 * (1 - p))))
+
+    def _muzzle(self, screen, x, y, color, size):
+        self._blit_glow(screen, (int(x), int(y)), size, color, 150)
+
+    def _beam(self, screen, x1, y1, x2, y2, color, width, alpha):
+        line = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
+        pygame.draw.line(line, (*color, max(0, min(255, alpha))),
+                         (x1, y1), (x2, y2), width)
+        screen.blit(line, (0, 0))
+
+    def _lightning(self, screen, x1, y1, x2, y2, t, seed):
+        """Ломаная молния между двумя точками (детерминированные изломы)."""
+        segs = 6
+        pts = [(x1, y1)]
+        for s in range(1, segs):
+            p = s / segs
+            mx = x1 + (x2 - x1) * p
+            my = y1 + (y2 - y1) * p
+            jitter = math.sin(t * 20 + s * 3 + seed) * 12
+            pts.append((int(mx + jitter), int(my - abs(jitter) * 0.5)))
+        pts.append((x2, y2))
+        line = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
+        pygame.draw.lines(line, (150, 220, 255, 220), False, pts, 2)
+        screen.blit(line, (0, 0))
 
     def _draw_embers(self, screen, sw, sh, t, intensity):
         """Медленно падающие угольки — детерминированы по индексу (без random)."""
