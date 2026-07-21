@@ -59,13 +59,16 @@ class PlayDecals:
             # state.decals.append(decal)
     
     def add_hit_decal(self, target, decal_type='blood_small', scale=0.3):
-        """Добавляет декаль попадания"""
-        # ✅ ЗАКОММЕНТИРОВАНЫ ВСЕ ДЕКАЛИ ПОПАДАНИЯ
-        # state = self.state
-        # if target:
-        #     decal = Decal(target.x, target.y, decal_type, scale=scale)
-        #     state.decals.append(decal)
-        pass
+        """Добавляет декаль попадания на цель (враг)."""
+        state = self.state
+        if target:
+            decal = Decal(target.x, target.y, decal_type, scale=scale)
+            state.decals.append(decal)
+
+    def add_hit_decal_at(self, x, y, decal_type='blood_small', scale=0.3):
+        """Добавляет декаль попадания в точке (для снарядов)."""
+        decal = Decal(x, y, decal_type, scale=scale)
+        self.state.decals.append(decal)
     
     def add_death_decal(self, enemy):
         """Добавляет декаль смерти"""

@@ -87,6 +87,20 @@ class BusEvents:
         if tower_x and tower_y and target:
             state.decals_logic.add_muzzle_flash(tower_x, tower_y, target, tower_id)
             state.effects_logic.add_muzzle_effect(tower_x, tower_y, tower_id)
+
+        # Видимые декали попадания по врагу — по типу урона.
+        # Исключены водомёт и огнемёт (у них струя, а не точечное попадание);
+        # кислота ставит декаль в точке попадания снаряда (acid_pool_request).
+        if target and tower_id not in ('water', 'flamethrower', 'acid'):
+            hit_decal = {
+                'sniper':   ('blood_small', 0.35),
+                'turret':   ('blood_small', 0.3),
+                'electric': ('spark', 0.35),
+                'freeze':   ('ice_crystal', 0.4),
+                'rocket':   ('crack', 0.6),
+                'pvo':      ('spark', 0.3),
+            }.get(tower_id, ('blood_small', 0.3))
+            state.decals_logic.add_hit_decal(target, hit_decal[0], hit_decal[1])
         
         # ✅ ЗАКОММЕНТИРОВАНЫ ВСЕ ДЕКАЛИ ПОПАДАНИЯ ОТ ВЫСТРЕЛОВ
         # if target:
@@ -215,6 +229,8 @@ class BusEvents:
         pool = AcidPool(x, y, data['ground_damage'],
                         data['interval'], data['duration'])
         state.acid_pools.append(pool)
+        # Декаль брызг кислоты в точке попадания снаряда
+        state.decals_logic.add_hit_decal_at(x, y, 'acid', 0.5)
 
     def _on_lightning_effect(self, data):
         state = self.state
