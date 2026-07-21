@@ -72,15 +72,10 @@ class MenuHandlers:
             state.game.state_manager.change_state('DIFFICULTY_SELECT')
             return
 
-        level = profile.current_level
-        level_data = build_level(level)
-
-        if self.audio.settings.music_enabled:
-            self.audio.play_music("game_theme.wav")
-
-        from ..play.state import PlayState
-        state.game.state_manager.add_state('PLAYING', PlayState(state.game, level, level_data))
-        state.game.state_manager.change_state('PLAYING')
+        # Сложность уже выбрана — запускаем бой через интро-сцену
+        # (сглаживает резкий переход; сама создаст PLAYING по окончании).
+        from ..intro_state import launch_game_with_intro
+        launch_game_with_intro(state.game, profile, self.audio)
 
     def _go_to_levels(self):
         state = self.state

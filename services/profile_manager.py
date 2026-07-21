@@ -14,6 +14,10 @@ class Profile:
         # Сложность: 'medium' | 'hard'. None = ещё не выбрана (покажем окно
         # выбора при первом старте игры). Существующие профили -> 'medium'.
         self.difficulty = None
+        # Длинное сюжетное интро показывается один раз на профиль.
+        # Свежий профиль -> False (покажем). Старые профили при загрузке
+        # получают True (не спамим тех, кто уже играл).
+        self.intro_seen = False
         self.created_at = datetime.now().isoformat()
         self.last_played = datetime.now().isoformat()
         
@@ -33,6 +37,7 @@ class Profile:
             'name': self.name,
             'mode': self.mode,
             'difficulty': self.difficulty,
+            'intro_seen': self.intro_seen,
             'created_at': self.created_at,
             'last_played': self.last_played,
             'progress': {
@@ -51,6 +56,8 @@ class Profile:
         # Старые профили (ключа нет) -> 'medium'. Свежий, не выбравший
         # сложность (ключ есть = None) -> остаётся None, покажем окно.
         profile.difficulty = data.get('difficulty', 'medium')
+        # Ключа нет = старый профиль, уже игравший -> интро не показываем.
+        profile.intro_seen = data.get('intro_seen', True)
         profile.created_at = data.get('created_at', datetime.now().isoformat())
         profile.last_played = data.get('last_played', datetime.now().isoformat())
         

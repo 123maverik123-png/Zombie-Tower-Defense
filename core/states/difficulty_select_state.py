@@ -93,17 +93,10 @@ class DifficultySelectState(State):
         self.profile_manager.save_profile(profile)
         self.audio.play_sound("button_click")
 
-        EventBus.clear()
-        level = profile.current_level
-        level_data = build_level(level)
-        if self.audio.settings.music_enabled:
-            self.audio.play_music("game_theme.wav")
-
-        if 'PLAYING' in self.game.state_manager._states:
-            del self.game.state_manager._states['PLAYING']
-        from .play.state import PlayState
-        self.game.state_manager.add_state('PLAYING', PlayState(self.game, level, level_data))
-        self.game.state_manager.change_state('PLAYING')
+        # Запуск боя через интро-сцену (сглаживает резкий переход;
+        # при первом заходе покажет сюжетное интро, дальше — карточку уровня).
+        from .intro_state import launch_game_with_intro
+        launch_game_with_intro(self.game, profile, self.audio)
 
     def _back_to_menu(self):
         self.audio.play_sound("button_click")
