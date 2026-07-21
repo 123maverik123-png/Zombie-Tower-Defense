@@ -116,14 +116,21 @@ class TowerVisuals:
                             text_region.w, text_region.h)
     
     def draw_flame_batch(self, renderer, offset_x: int = 0, offset_y: int = 0):
-        """GPU-версия струи огнемёта: аддитивные мягкие круги вдоль луча."""
+        """GPU-струя огнемёта/водомёта: аддитивные мягкие круги вдоль луча.
+
+        Огнемёт — тёплая струя (жёлтый→красный), водомёт — инвертированный
+        холодный цвет (голубой→белый). Струя выраженная: широкое тело,
+        яркое ядро у сопла, брызги/искры.
+        """
         tower = self.tower
-        if not tower.alive or tower.id != 'flamethrower' or not tower.flame_target:
+        if not tower.alive or tower.id not in ('flamethrower', 'water') or not tower.flame_target:
             return
 
         target = tower.flame_target
         if not target or not target.alive:
             return
+
+        is_water = tower.id == 'water'
 
         from core.opengl.batch import BLEND_ADDITIVE
         batch = renderer.batch
@@ -146,54 +153,63 @@ class TowerVisuals:
         end_x -= dx * 20
         end_y -= dy * 20
 
-        steps = max(6, int(distance / 10))
+        steps = max(8, int(distance / 8))
         time = pygame.time.get_ticks() / 100
-        spark_count = min(5, 3 + tower.flame_level)
+        spark_count = min(7, 4 + tower.flame_level)
 
-        # Тело струи
+        # Тело струи — шире и плотнее, чем раньше
         for i in range(steps):
             t = i / steps
             x = start_x + (end_x - start_x) * t
             y = start_y + (end_y - start_y) * t
 
-            noise_x = random.uniform(-4, 4) * (1 - t * 0.3)
-            noise_y = random.uniform(-4, 4) * (1 - t * 0.3)
+            noise_x = random.uniform(-6, 6) * (1 - t * 0.3)
+            noise_y = random.uniform(-6, 6) * (1 - t * 0.3)
 
-            width = max(3, int((6 + tower.flame_level) * (1 - t * 0.3)))
+            width = max(4, int((9 + tower.flame_level * 1.5) * (1 - t * 0.25)))
 
-            r = 255
-            g = max(0, min(255, int(200 - 180 * t)))
-            b = max(0, min(255, int(40 - 40 * t)))
-            alpha = max(60, min(255, int(200 * (1 - t * 0.2))))
+            if is_water:
+                # Инверсия огня: голубой у сопла → белесый на конце
+                r = max(0, min(255, int(60 + 160 * t)))
+                g = max(0, min(255, int(150 + 90 * t)))
+                b = 255
+            else:
+                r = 255
+                g = max(0, min(255, int(200 - 180 * t)))
+                b = max(0, min(255, int(40 - 40 * t)))
+            alpha = max(70, min(255, int(220 * (1 - t * 0.2))))
 
             batch.draw(soft, x + noise_x, y + noise_y, width * 2, width * 2,
                        color=(r, g, b, alpha), blend=BLEND_ADDITIVE)
 
         # Яркое ядро у сопла
-        for i in range(4):
-            t = i / 10
+        core_color = (200, 240, 255) if is_water else (255, 255, 200)
+        for i in range(6):
+            t = i / 12
             x = start_x + (end_x - start_x) * t * 0.5
             y = start_y + (end_y - start_y) * t * 0.5
             noise_x = random.uniform(-3, 3) * (1 - t)
             noise_y = random.uniform(-3, 3) * (1 - t)
-            size = max(2, int(5 * (1 - t * 0.4)) + random.randint(0, 1))
-            alpha = int(180 * (1 - t * 0.3))
+            size = max(3, int(7 * (1 - t * 0.4)) + random.randint(0, 2))
+            alpha = int(200 * (1 - t * 0.3))
             batch.draw(soft, x + noise_x, y + noise_y, size * 2, size * 2,
-                       color=(255, 255, 200, alpha), blend=BLEND_ADDITIVE)
+                       color=(*core_color, alpha), blend=BLEND_ADDITIVE)
 
-        # Искры
+        # Брызги / искры
+        spark_color = (150, 210, 255) if is_water else (255, 200, 100)
         if self._spark_timer <= 0:
             self._spark_timer = 0.1
             for i in range(spark_count):
-                t = random.uniform(0.1, 0.9)
+                t = random.uniform(0.1, 0.95)
                 x = start_x + (end_x - start_x) * t
                 y = start_y + (end_y - start_y) * t
-                spread = 10 * (1 - t * 0.3)
+                spread = 12 * (1 - t * 0.3)
                 x += math.sin(time + i * 1.5) * spread
                 y += math.cos(time * 1.2 + i * 2.1) * spread
-                size = random.randint(2, 4)
+                size = random.randint(2, 5)
                 batch.draw(dot, x, y, size, size,
-                           color=(255, 200, 100, 255), blend=BLEND_ADDITIVE)
+                           color=(*spark_color, 255), blend=BLEND_ADDITIVE)
         else:
             self._spark_timer -= 0.016
+
     

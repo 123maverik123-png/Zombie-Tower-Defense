@@ -138,8 +138,8 @@ class Tower(Entity):
             self.flame_target = None
             return None
         
-        # Сохраняем цель для струи
-        if self.id == 'flamethrower':
+        # Сохраняем цель для струи (огнемёт и водомёт рисуют луч)
+        if self.id in ('flamethrower', 'water'):
             self.flame_target = self.target
         
         # Стреляем
