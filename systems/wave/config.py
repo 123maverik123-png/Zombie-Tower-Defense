@@ -17,7 +17,7 @@ WAVE_CONFIG = {
     'min_waves': 3,
     'max_waves': 12,
     'min_enemies_per_wave': 5,
-    'max_enemies_per_wave': 60,
+    'max_enemies_per_wave': 70,
     'base_spawn_delay': 0.5,
     'min_spawn_delay': 0.3,
     'boss_wave_interval': 5,   # Каждый 5-й уровень
@@ -30,7 +30,7 @@ WAVE_CONFIG = {
 
     # Босс: HP = boss_base_hp + boss_hp_per_level × level
     'boss_base_hp': 500,
-    'boss_hp_per_level': 200,
+    'boss_hp_per_level': 220,
 
     # Мягкий старт: интервал спавна на первых уровнях
     # {уровень: базовая задержка}
