@@ -51,6 +51,11 @@ def rect(g, x0, y0, x1, y1, c):
 
 
 def outline(g):
+    """Контур вокруг непустых пикселей, НО не по самим краям тайла.
+
+    Крайние пиксели (x=0/GW-1, y=0/GH-1) — линия стыковки с соседним
+    тайлом; чёрный контур там даёт видимые полосы между стенами.
+    """
     marks = []
     for y in range(GH):
         for x in range(GW):
@@ -61,6 +66,8 @@ def outline(g):
                         marks.append((x, y))
                         break
     for x, y in marks:
+        if x == 0 or x == GW - 1 or y == 0 or y == GH - 1:
+            continue  # не обводим кромку тайла — там стык
         g[y][x] = OUT
 
 

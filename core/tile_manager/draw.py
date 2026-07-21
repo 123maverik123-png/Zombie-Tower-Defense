@@ -43,15 +43,25 @@ class TileDraw:
                     scaled = tile_surface
                 renderer.load_texture(atlas_name, scaled)
 
-        # Все тайлы одним батчем
+        # Все тайлы одним батчем.
+        # Сначала базовый слой травы под КАЖДОЙ клеткой — дорожные/портальные
+        # тайлы имеют полупрозрачные края (сглаженные углы, тени), и без
+        # подложки сквозь них виден фон. Трава закрывает эти просветы.
+        grass_region = None
+        if 'grass' in tiles:
+            grass_region = renderer.get_region(f"tile_grass_{self.tile_size}")
+
         for y in range(len(map_data)):
             for x in range(len(map_data[0])):
                 tile_name = map_data[y][x]
+                px = x * self.tile_size + offset_x
+                py = y * self.tile_size + offset_y
+                # подложка травой под всё, кроме самой травы
+                if grass_region is not None and tile_name != 'grass':
+                    batch.draw(grass_region, px, py, self.tile_size, self.tile_size, centered=False)
                 if tile_name in tiles:
                     region = renderer.get_region(f"tile_{tile_name}_{self.tile_size}")
                     if region:
-                        px = x * self.tile_size + offset_x
-                        py = y * self.tile_size + offset_y
                         batch.draw(region, px, py, self.tile_size, self.tile_size, centered=False)
 
     def set_tile_size(self, tile_size: int):
