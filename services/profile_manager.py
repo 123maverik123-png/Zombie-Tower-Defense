@@ -11,6 +11,9 @@ class Profile:
     def __init__(self, name: str, mode: str = 'normal'):
         self.name = name
         self.mode = mode
+        # Сложность: 'medium' | 'hard'. None = ещё не выбрана (покажем окно
+        # выбора при первом старте игры). Существующие профили -> 'medium'.
+        self.difficulty = None
         self.created_at = datetime.now().isoformat()
         self.last_played = datetime.now().isoformat()
         
@@ -29,6 +32,7 @@ class Profile:
         return {
             'name': self.name,
             'mode': self.mode,
+            'difficulty': self.difficulty,
             'created_at': self.created_at,
             'last_played': self.last_played,
             'progress': {
@@ -44,6 +48,9 @@ class Profile:
     @classmethod
     def from_dict(cls, data: dict) -> 'Profile':
         profile = cls(data['name'], data.get('mode', 'normal'))
+        # Старые профили (ключа нет) -> 'medium'. Свежий, не выбравший
+        # сложность (ключ есть = None) -> остаётся None, покажем окно.
+        profile.difficulty = data.get('difficulty', 'medium')
         profile.created_at = data.get('created_at', datetime.now().isoformat())
         profile.last_played = data.get('last_played', datetime.now().isoformat())
         
@@ -86,6 +93,17 @@ class Profile:
             'waves_survived': 0,
             'total_gold_earned': 0
         }
+
+    # Множители сложности: medium — сбалансированная база, hard — усиление.
+    # По формуле в systems/wave/manager.py hard даёт врагам +HP/скорость/золото.
+    DIFFICULTY_MULTIPLIERS = {
+        'medium': 1.0,
+        'hard': 1.4,
+    }
+
+    def difficulty_multiplier(self) -> float:
+        """Множитель сложности для WaveManager.set_difficulty (medium=1.0)."""
+        return self.DIFFICULTY_MULTIPLIERS.get(self.difficulty or 'medium', 1.0)
 
 
 class ProfileManager:
