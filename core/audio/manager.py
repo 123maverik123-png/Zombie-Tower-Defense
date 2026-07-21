@@ -5,6 +5,7 @@ from typing import Optional
 from .channels import ChannelManager
 from .sounds import SoundManager
 from .music import MusicManager
+from utils.debug import dprint
 
 
 class AudioManager:
@@ -189,7 +190,7 @@ class AudioManager:
             self._set_flame_volume(sound)
             channel.play(sound, loops=-1)
             self._flame_is_playing = True
-            print("🔥 Flame sound GLOBAL ON")
+            dprint("🔥 Flame sound GLOBAL ON")
         except Exception as e:
             print(f"⚠️ Error starting flame sound: {e}")
     
@@ -203,7 +204,7 @@ class AudioManager:
             if channel:
                 channel.stop()
             self._flame_is_playing = False
-            print("🔥 Flame sound GLOBAL OFF")
+            dprint("🔥 Flame sound GLOBAL OFF")
         except Exception as e:
             print(f"⚠️ Error stopping flame sound: {e}")
     
@@ -226,10 +227,10 @@ class AudioManager:
         """Сбрасывает все состояния звуков"""
         self.flame_reset()
         self.channel_manager.reset_states()
-        print("🔄 All sound states reset")
+        dprint("🔄 All sound states reset")
     
     def stop_all_loop_sounds(self):
         """Останавливает все зацикленные звуки"""
         self.flame_force_stop()
         self.channel_manager.stop_all_loop_sounds()
-        print("🔄 Stopped all loop sounds")
+        dprint("🔄 Stopped all loop sounds")

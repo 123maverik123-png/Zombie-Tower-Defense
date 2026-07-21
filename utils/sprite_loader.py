@@ -3,6 +3,7 @@ import pygame
 import os
 import re
 from typing import Dict, List, Optional, Tuple
+from utils.debug import dprint
 
 
 class SpriteLoader:
@@ -47,7 +48,7 @@ class SpriteLoader:
             
             self.scale_factor = new_scale
             self.cache.clear()
-            print(f"🔧 Sprite scale set to: {self.scale_factor:.2f} (tile: {tile_size}px)")
+            dprint(f"🔧 Sprite scale set to: {self.scale_factor:.2f} (tile: {tile_size}px)")
         finally:
             self._updating = False
     
@@ -68,7 +69,7 @@ class SpriteLoader:
             print(f"❌ Folder not found: {folder_path}")
             return self._create_fallback_animations(int(64 * scale))
         
-        print(f"🔄 Loading animations from folder: {folder_name}")
+        dprint(f"🔄 Loading animations from folder: {folder_name}")
         
         # Находим все PNG и JPG файлы
         valid_extensions = ('.png', '.PNG', '.jpg', '.JPG', '.jpeg', '.JPEG')
@@ -138,7 +139,7 @@ class SpriteLoader:
                     frames.append(placeholder)
             
             animations[direction] = frames
-            print(f"   ✅ {direction}: {len(frames)} frames loaded")
+            dprint(f"   ✅ {direction}: {len(frames)} frames loaded")
         
         return animations
     
@@ -182,7 +183,7 @@ class SpriteLoader:
             'right': frames.copy()
         }
         
-        print(f"   ✅ {len(frames)} frames loaded (same for all directions)")
+        dprint(f"   ✅ {len(frames)} frames loaded (same for all directions)")
         return animations
     
     def load_zombie_animations(self, sheet_name: str, sprite_size: int = 256, 
@@ -197,7 +198,7 @@ class SpriteLoader:
         
         try:
             sheet = pygame.image.load(sheet_path).convert_alpha()
-            print(f"🔄 Loading zombie animations from sheet: {sheet_name}")
+            dprint(f"🔄 Loading zombie animations from sheet: {sheet_name}")
             
             directions = ['down', 'up', 'left', 'right']
             animations = {}
@@ -227,7 +228,7 @@ class SpriteLoader:
                     frames.append(frame)
                 
                 animations[direction] = frames
-                print(f"   ✅ {direction}: {len(frames)} frames loaded")
+                dprint(f"   ✅ {direction}: {len(frames)} frames loaded")
             
             return animations
             
@@ -264,7 +265,7 @@ class SpriteLoader:
         """Устанавливает масштаб для всех спрайтов"""
         self.scale_factor = scale
         self.cache.clear()
-        print(f"🔧 Scale set to: {scale}")
+        dprint(f"🔧 Scale set to: {scale}")
     
     def load_image(self, path: str, scale: Optional[Tuple[int, int]] = None) -> Optional[pygame.Surface]:
         """Загружает отдельное изображение"""

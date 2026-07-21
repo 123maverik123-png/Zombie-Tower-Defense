@@ -6,6 +6,7 @@ from .map_loader import MapLoader
 from .camera import Camera
 from .draw import TileDraw
 from .utils import get_path_from_map, is_on_path, can_build
+from utils.debug import dprint
 
 
 class TileManager:
@@ -47,7 +48,7 @@ class TileManager:
         if os.path.exists(bg_path):
             try:
                 self.background = pygame.image.load(bg_path).convert()
-                print("✅ Background loaded")
+                dprint("✅ Background loaded")
             except Exception as e:
                 print(f"⚠️ Error loading background: {e}")
                 self.background = None
@@ -147,7 +148,7 @@ class TileManager:
         )
     
     def on_resolution_changed(self, screen_width: int, screen_height: int):
-        print(f"🔄 TileManager resolution changed: {screen_width}x{screen_height}")
+        dprint(f"🔄 TileManager resolution changed: {screen_width}x{screen_height}")
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.available_height = screen_height - self.bottom_offset

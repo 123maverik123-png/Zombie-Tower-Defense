@@ -3,6 +3,7 @@ import os
 import json
 from typing import Optional, List
 from datetime import datetime
+from utils.debug import dprint
 
 class Profile:
     """Профиль игрока"""
@@ -109,7 +110,7 @@ class ProfileManager:
         self.current_profile: Optional[Profile] = None
         self._ensure_dir()
         self._load_all_profiles()
-        print(f"📂 ProfileManager initialized. Found {len(self.profiles)} profiles.")
+        dprint(f"📂 ProfileManager initialized. Found {len(self.profiles)} profiles.")
     
     def _ensure_dir(self):
         os.makedirs(self.PROFILES_DIR, exist_ok=True)
@@ -181,7 +182,7 @@ class ProfileManager:
         profile.gold = 300
         self.save_profile(profile)
         self.current_profile = profile
-        print(f"✅ Profile created: {name} ({mode})")
+        dprint(f"✅ Profile created: {name} ({mode})")
         return profile
     
     def profile_exists(self, name: str) -> bool:
@@ -226,6 +227,6 @@ class ProfileManager:
         if self.current_profile and self.is_hardcore():
             self.current_profile.reset_progress()
             self.save_profile(self.current_profile)
-            print(f"💀 HARDCORE: Progress reset for {self.current_profile.name}!")
+            dprint(f"💀 HARDCORE: Progress reset for {self.current_profile.name}!")
             return True
         return False
