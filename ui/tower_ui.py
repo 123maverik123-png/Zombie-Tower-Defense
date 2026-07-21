@@ -22,7 +22,12 @@ class TowerUI:
         self.tooltip_pos = (0, 0)
 
         self._upgrade_rect = None
+        self._repair_rect = None
         self._sell_rect = None
+
+    def _is_fort(self):
+        """Стена/ворота — у них есть ремонт (в отличие от башен)."""
+        return self.tower is not None and hasattr(self.tower.upgrades, 'repair')
 
     def show(self, tower, pos):
         self.active = True
@@ -56,6 +61,7 @@ class TowerUI:
         self.upgrade_btn = None
         self.sell_btn = None
         self._upgrade_rect = None
+        self._repair_rect = None
         self._sell_rect = None
         self.hovered_btn = None
         self.show_tooltip = False
@@ -66,6 +72,9 @@ class TowerUI:
 
         if self._upgrade_rect and self._upgrade_rect.collidepoint(pos):
             return 'upgrade'
+
+        if self._repair_rect and self._repair_rect.collidepoint(pos):
+            return 'repair'
 
         if self._sell_rect and self._sell_rect.collidepoint(pos):
             return 'sell'
@@ -83,6 +92,13 @@ class TowerUI:
             self.hovered_btn = 'upgrade'
             self.show_tooltip = True
             self.tooltip_text = f"Upgrade: ${self.tower.upgrades.upgrade_cost}"
+            self.tooltip_pos = (pos[0] + 10, pos[1] - 20)
+            return
+
+        if self._repair_rect and self._repair_rect.collidepoint(pos):
+            self.hovered_btn = 'repair'
+            self.show_tooltip = True
+            self.tooltip_text = f"Repair: ${self.tower.upgrades.repair_cost()}"
             self.tooltip_pos = (pos[0] + 10, pos[1] - 20)
             return
 
@@ -110,16 +126,22 @@ class TowerUI:
 
         btn_size = 40
         spacing = 10
-        total_width = btn_size * 2 + spacing
+        is_fort = self._is_fort()
+        n_btns = 3 if is_fort else 2
+        total_width = btn_size * n_btns + spacing * (n_btns - 1)
 
         upgrade_x = btn_offset_x - total_width // 2
-        upgrade_y = btn_offset_y - btn_size - 5
+        row_y = btn_offset_y - btn_size - 5
 
-        sell_x = upgrade_x + btn_size + spacing
-        sell_y = upgrade_y
-
-        self._upgrade_rect = pygame.Rect(upgrade_x, upgrade_y, btn_size, btn_size)
-        self._sell_rect = pygame.Rect(sell_x, sell_y, btn_size, btn_size)
+        self._upgrade_rect = pygame.Rect(upgrade_x, row_y, btn_size, btn_size)
+        if is_fort:
+            repair_x = upgrade_x + btn_size + spacing
+            self._repair_rect = pygame.Rect(repair_x, row_y, btn_size, btn_size)
+            sell_x = repair_x + btn_size + spacing
+        else:
+            self._repair_rect = None
+            sell_x = upgrade_x + btn_size + spacing
+        self._sell_rect = pygame.Rect(sell_x, row_y, btn_size, btn_size)
 
         # === КНОПКА УЛУЧШЕНИЯ ===
         upgrade_hovered = self.hovered_btn == 'upgrade'
@@ -138,6 +160,19 @@ class TowerUI:
         level_text = self.small_font.render(str(self.tower.upgrades.level), True, PARCHMENT)
         screen.blit(level_text, (self._upgrade_rect.centerx - level_text.get_width() // 2,
                                   self._upgrade_rect.centery + 14))
+
+        # === КНОПКА РЕМОНТА (стены/ворота) ===
+        if self._repair_rect is not None:
+            repair_hovered = self.hovered_btn == 'repair'
+            if repair_hovered:
+                self._draw_glow(screen, self._repair_rect.center, 22, TEAL_GLOW, alpha=80)
+            pygame.draw.circle(screen, STONE_MID, self._repair_rect.center, 22)
+            pygame.draw.circle(screen, GOLD_BRIGHT if repair_hovered else GOLD, self._repair_rect.center, 22, 2)
+            # иконка «гаечный крест» — плюс (ремонт/восстановление)
+            cx, cy = self._repair_rect.center
+            col = GOLD_BRIGHT if repair_hovered else PARCHMENT
+            pygame.draw.rect(screen, col, (cx - 3, cy - 11, 6, 22))
+            pygame.draw.rect(screen, col, (cx - 11, cy - 3, 22, 6))
 
         # === КНОПКА ПРОДАЖИ ===
         sell_hovered = self.hovered_btn == 'sell'

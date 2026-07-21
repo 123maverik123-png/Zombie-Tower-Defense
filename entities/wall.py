@@ -29,6 +29,18 @@ class FortifyUpgrades:
         self.upgrade_cost = int(self.upgrade_cost * 1.4)
         return True
 
+    def repair_cost(self) -> int:
+        """Стоимость ремонта = базовая цена, растёт с уровнем (x1.5/ур)."""
+        return int(self.cost * (1.5 ** (self.level - 1)))
+
+    def repair(self) -> bool:
+        """Восстанавливает HP до максимума."""
+        e = self.entity
+        if e.health >= e.max_health:
+            return False
+        e.health = e.max_health
+        return True
+
 
 class Wall(Entity):
     """Обычная стена — блокирует путь, может быть атакована зомби."""

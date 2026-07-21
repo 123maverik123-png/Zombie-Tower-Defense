@@ -49,22 +49,28 @@ class PlayTowers:
         state = self.state
         tile_size = state.tile_manager.tile_size
         occupied = set()
-        
+
         for tower in state.towers:
+            if not getattr(tower, 'alive', True):
+                continue
             wx = tower.x // tile_size
             wy = tower.y // tile_size
             occupied.add((int(wx), int(wy)))
-        
+
         for wall in state.walls:
+            if not wall.alive:
+                continue
             wx = wall.x // tile_size
             wy = wall.y // tile_size
             occupied.add((int(wx), int(wy)))
-        
+
         for gate in state.gates:
+            if not gate.alive:
+                continue
             wx = gate.x // tile_size
             wy = gate.y // tile_size
             occupied.add((int(wx), int(wy)))
-        
+
         return occupied
     
     def _is_position_occupied(self, wx, wy):
@@ -198,58 +204,70 @@ class PlayTowers:
 
         return False
 
-    def _reorient_walls(self):
-        """Пересчитывает форму каждой стены по соседям (стены/ворота).
-
-        Прямая (h/v) — если соседи на одной оси; угловая (tl/tr/bl/br) —
-        если соседи на смежных осях (стена соединяет вертикальную линию с
-        горизонтальной, напр. двое ворот на разной высоте). Без подходящих
-        соседей — по оси, вдоль которой стоит одиночная стена, иначе 'h'.
-        """
+    def _occupied_neighbor_cells(self):
+        """Множества клеток, занятых живыми стенами и воротами."""
         state = self.state
-        # Множество занятых клеток: стены и ворота
-        occ = {}
-        for w in state.walls:
-            if w.alive:
-                occ[(w.wx, w.wy)] = w
-        gate_cells = set()
-        for g in state.gates:
-            if g.alive:
-                gate_cells.add((g.wx, g.wy))
+        wall_cells = {(w.wx, w.wy) for w in state.walls if w.alive}
+        gate_cells = {(g.wx, g.wy) for g in state.gates if g.alive}
+        return wall_cells, gate_cells
+
+    def _wall_variant_at(self, wx, wy, wall_cells=None, gate_cells=None):
+        """Форма стены в клетке (wx,wy) по соседям стен/ворот.
+
+        Прямая (h/v) вдоль линии; угловая (tl/tr/bl/br) на стыке осей.
+        Используется и при пересчёте, и в превью (какая стена встанет).
+        """
+        if wall_cells is None or gate_cells is None:
+            wall_cells, gate_cells = self._occupied_neighbor_cells()
 
         def has_neighbor(cx, cy):
-            return (cx, cy) in occ or (cx, cy) in gate_cells
+            return (cx, cy) in wall_cells or (cx, cy) in gate_cells
 
+        up = has_neighbor(wx, wy - 1)
+        down = has_neighbor(wx, wy + 1)
+        left = has_neighbor(wx - 1, wy)
+        right = has_neighbor(wx + 1, wy)
+        vert = up or down
+        horiz = left or right
+
+        if vert and horiz:
+            if up and left:
+                return 'tl'
+            if up and right:
+                return 'tr'
+            if down and left:
+                return 'bl'
+            return 'br'
+        if vert:
+            return 'v'
+        return 'h'  # горизонталь по умолчанию (в т.ч. одиночная)
+
+    def _reorient_walls(self):
+        """Пересчитывает форму каждой живой стены по соседям."""
+        state = self.state
+        wall_cells, gate_cells = self._occupied_neighbor_cells()
         for w in state.walls:
             if not w.alive:
                 continue
-            up = has_neighbor(w.wx, w.wy - 1)
-            down = has_neighbor(w.wx, w.wy + 1)
-            left = has_neighbor(w.wx - 1, w.wy)
-            right = has_neighbor(w.wx + 1, w.wy)
+            w.set_variant(self._wall_variant_at(w.wx, w.wy, wall_cells, gate_cells))
 
-            vert = up or down
-            horiz = left or right
+    def repair_fort(self, fort):
+        """Ремонт стены/ворот: восстановить HP до максимума за золото."""
+        state = self.state
+        if not hasattr(fort.upgrades, 'repair'):
+            return False
+        if fort.health >= fort.max_health:
+            state.feedback_logic.show_error(fort.x, fort.y, "Already full HP!")
+            return False
+        cost = fort.upgrades.repair_cost()
+        if not state.player.spend_gold(cost):
+            state.feedback_logic.show_error(fort.x, fort.y, f"Need {cost} gold to repair!")
+            return False
+        fort.upgrades.repair()
+        state.audio.play_sound("tower_build")
+        state.feedback_logic.show_success(fort.x, fort.y)
+        return True
 
-            if vert and horiz:
-                # Угол: соединяет вертикальное плечо с горизонтальным.
-                # tl соединяет ВЛЕВО и ВВЕРХ, tr — ВПРАВО+ВВЕРХ, и т.д.
-                if up and left:
-                    variant = 'tl'
-                elif up and right:
-                    variant = 'tr'
-                elif down and left:
-                    variant = 'bl'
-                else:
-                    variant = 'br'
-            elif vert:
-                variant = 'v'
-            elif horiz:
-                variant = 'h'
-            else:
-                variant = 'h'  # одиночная — горизонтальная по умолчанию
-            w.set_variant(variant)
-    
     def upgrade_tower(self, tower):
         state = self.state
 

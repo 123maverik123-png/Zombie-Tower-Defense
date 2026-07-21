@@ -75,9 +75,9 @@ class HUD:
         mode_color = SUCCESS if state.building_mode else PARCHMENT
         if state.wall_placement_mode:
             if state.selected_wall_type == 'wall':
-                mode_text = "WALL [auto]"
+                mode_text = "WALL"
             else:
-                mode_text = "GATE [auto]"
+                mode_text = "GATE"
             mode_color = GOLD_BRIGHT
         
         mode_surf = self.font.render(f"[{mode_text}]", True, mode_color)

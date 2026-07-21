@@ -87,8 +87,13 @@ class PreviewDraw:
             sprite_name = f"gate_{orientation}"
         else:
             can_build = tile == 'grass'
-            variant = getattr(state, 'selected_wall_variant', 'h')
-            name, cost = f"WALL:{variant.upper()}", 80
+            # Показываем ту форму, что реально встанет по автоориентации,
+            # учитывая гипотетическую стену в клетке под курсором.
+            wall_cells, gate_cells = state.towers_logic._occupied_neighbor_cells()
+            wall_cells = set(wall_cells)
+            wall_cells.add((wx, wy))
+            variant = state.towers_logic._wall_variant_at(wx, wy, wall_cells, gate_cells)
+            name, cost = 'WALL', 80
             sprite_name = f"wall_{variant}"
 
         if can_build and self._cell_occupied(state, wx, wy):

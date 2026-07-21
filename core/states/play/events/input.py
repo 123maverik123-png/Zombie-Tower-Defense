@@ -77,31 +77,9 @@ class InputEvents:
         elif key == pygame.K_g:
             self._toggle_wall_mode()
 
-        elif key == pygame.K_r:
-            self._cycle_wall_variant()
-
-    def _cycle_wall_variant(self):
-        """Переключает форму стены по кругу (только для типа 'wall')."""
-        state = self.state
-        if not state.wall_placement_mode or state.selected_wall_type != 'wall':
-            return
-        from entities.wall import WALL_VARIANTS
-        cur = getattr(state, 'selected_wall_variant', 'h')
-        idx = (WALL_VARIANTS.index(cur) + 1) % len(WALL_VARIANTS) if cur in WALL_VARIANTS else 0
-        state.selected_wall_variant = WALL_VARIANTS[idx]
-        state.audio.play_sound("button_click", volume_override=0.3)
-
     def _handle_mouse_wheel(self, event):
-        """Колесо в режиме строительства стены: крутит форму стены."""
-        state = self.state
-        if not state.wall_placement_mode or state.selected_wall_type != 'wall':
-            return
-        step = 1 if event.y > 0 else -1
-        from entities.wall import WALL_VARIANTS
-        cur = getattr(state, 'selected_wall_variant', 'h')
-        idx = WALL_VARIANTS.index(cur) if cur in WALL_VARIANTS else 0
-        state.selected_wall_variant = WALL_VARIANTS[(idx + step) % len(WALL_VARIANTS)]
-        state.audio.play_sound("button_click", volume_override=0.3)
+        """Колесо мыши больше не меняет форму стены — она авто по соседям."""
+        return
     
     def _select_tower_by_index(self, index):
         state = self.state
@@ -162,6 +140,10 @@ class InputEvents:
                 if state.tower_ui.tower:
                     state.towers_logic.upgrade_tower(state.tower_ui.tower)
                 return
+            elif action == 'repair':
+                if state.tower_ui.tower:
+                    state.towers_logic.repair_fort(state.tower_ui.tower)
+                return
             elif action == 'sell':
                 if state.tower_ui.tower:
                     state.towers_logic.sell_tower(state.tower_ui.tower)
@@ -192,6 +174,8 @@ class InputEvents:
         # Не в режиме строительства, чтобы не мешать постройке.
         if not state.wall_placement_mode:
             for fort in list(state.gates) + list(state.walls):
+                if not fort.alive:
+                    continue
                 ds = getattr(fort, 'draw_size', max(fort.width, fort.height))
                 fort_rect = pygame.Rect(
                     fort.x + offset_x - ds // 2,

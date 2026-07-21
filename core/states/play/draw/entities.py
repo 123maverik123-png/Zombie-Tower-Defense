@@ -40,14 +40,18 @@ class EntitiesDraw:
                     drawables.append((sort_y,
                                       lambda e=enemy: e.visuals.draw_batch(renderer, ox, oy)))
 
+        # Стены/ворота — препятствия, по которым зомби лезут: сортируем по
+        # ВЕРХНЕЙ кромке визуала, чтобы живые зомби рядом рисовались поверх.
         for gate in state.gates:
             if gate.alive:
-                drawables.append((gate.y + gate.height * 0.5,
+                gds = getattr(gate, 'draw_size', gate.height)
+                drawables.append((gate.y - gds * 0.5,
                                   lambda g=gate: g.draw_batch(renderer, ox, oy)))
 
         for wall in state.walls:
             if wall.alive:
-                drawables.append((wall.y + wall.height * 0.5,
+                wds = getattr(wall, 'draw_size', wall.height)
+                drawables.append((wall.y - wds * 0.5,
                                   lambda w=wall: w.draw_batch(renderer, ox, oy)))
 
         # Высокие декорации (деревья, здания) участвуют в сортировке

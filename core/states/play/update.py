@@ -56,6 +56,15 @@ class PlayUpdate:
         else:
             state.enemies = [e for e in state.enemies if e.alive]
 
+        # Очистка разрушенных стен/ворот — иначе их клетки остаются "заняты"
+        walls_before = len(state.walls)
+        gates_before = len(state.gates)
+        state.walls = [w for w in state.walls if w.alive]
+        state.gates = [g for g in state.gates if g.alive]
+        if (len(state.walls) != walls_before or len(state.gates) != gates_before):
+            if hasattr(state, 'towers_logic'):
+                state.towers_logic._reorient_walls()  # соседи пересчитывают форму
+
         # ✅ Конвертируем координаты мыши
         mouse_pos = pygame.mouse.get_pos()
         converted = self._convert_mouse_pos(mouse_pos)
