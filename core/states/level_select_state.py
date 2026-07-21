@@ -225,7 +225,8 @@ class LevelSelectState(State):
         if self.profile:
             mode_text = "HARDCORE" if self.profile.mode == 'hardcore' else "NORMAL"
             mode_color = DANGER_BRIGHT if self.profile.mode == 'hardcore' else GOLD
-            mode_info = self.small_font.render(f"{mode_text}  •  {self.profile.name}", True, mode_color)
+            diff = (self.profile.difficulty or 'medium').upper()
+            mode_info = self.small_font.render(f"{mode_text}  •  {diff}  •  {self.profile.name}", True, mode_color)
             screen.blit(mode_info, (screen_w - mode_info.get_width() - 70, 70))
 
         if self.ui is not None:
