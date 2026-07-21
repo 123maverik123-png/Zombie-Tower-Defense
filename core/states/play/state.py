@@ -56,6 +56,7 @@ class PlayState(State):
         self.lightning_effects = []
         self.hit_effects = []
         self.decals = []
+        self.hit_decals = []
         self.acid_pools = []
         self.walls = []
         self.gates = []

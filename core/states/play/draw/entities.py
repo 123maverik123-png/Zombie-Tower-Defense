@@ -86,3 +86,8 @@ class EntitiesDraw:
 
         for flash in state.decals_logic.muzzle_flashes:
             flash.draw_batch(renderer, ox, oy)
+
+        # Декали попаданий — поверх врагов (в отличие от наземных декалей)
+        for decal in state.hit_decals:
+            if -100 < decal.x + ox < screen_w + 100 and -100 < decal.y + oy < screen_h + 100:
+                decal.draw_batch(renderer, ox, oy)
