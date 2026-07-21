@@ -14,7 +14,7 @@
 """
 import pygame
 
-from .model import BalanceModel, TOWER_FIELDS, ENEMY_FIELDS, FIELD_SPEC, snap
+from .model import BalanceModel, TOWER_FIELDS, ENEMY_FIELDS, WAVE_FIELDS, FIELD_SPEC, snap
 
 CATEGORIES = ["Towers", "Enemies", "Waves"]
 
@@ -79,6 +79,8 @@ class BalanceEditor:
             return TOWER_FIELDS
         if cat == "Enemies":
             return ENEMY_FIELDS
+        if cat == "Waves":
+            return WAVE_FIELDS
         return []
 
     def _current_object(self):
@@ -94,6 +96,8 @@ class BalanceEditor:
             return self.model.get_tower_value(obj_id, field)
         if cat == "Enemies":
             return self.model.get_enemy_value(obj_id, field)
+        if cat == "Waves":
+            return self.model.get_wave_value(field)
         return None
 
     def _set_value(self, obj_id, field, value):
@@ -103,11 +107,14 @@ class BalanceEditor:
             self.model.set_tower_value(obj_id, field, value)
         elif cat == "Enemies":
             self.model.set_enemy_value(obj_id, field, value)
+        elif cat == "Waves":
+            self.model.set_wave_value(field, value)
         if self.model.error:
             self.status = "ERR: " + self.model.error
             self.model.error = ""
         else:
-            self.status = f"{obj_id}.{field} = {value} (saved)"
+            label = field if cat == "Waves" else f"{obj_id}.{field}"
+            self.status = f"{label} = {value} (saved)"
 
     # --- Ввод ---
 
@@ -181,7 +188,7 @@ class BalanceEditor:
 
     def _nudge(self, field, direction):
         obj_id = self._current_object()
-        if obj_id is None:
+        if obj_id is None and self._category() != "Waves":
             return
         cur = self._get_value(obj_id, field)
         if cur is None:
@@ -195,7 +202,7 @@ class BalanceEditor:
         if not field:
             return
         obj_id = self._current_object()
-        if obj_id is None:
+        if obj_id is None and self._category() != "Waves":
             return
         spec = FIELD_SPEC.get(field)
         if not spec:
@@ -223,12 +230,19 @@ class BalanceEditor:
 
         cat = self._category()
         fields = self._fields()
-        rows = 0
         obj_id = self._current_object()
-        if obj_id is not None:
-            rows = sum(1 for f in fields if self._get_value(obj_id, f) is not None)
 
-        panel_h = 130 + rows * ROW_H
+        # Число строк-полей (для высоты панели)
+        if cat == "Waves":
+            rows = sum(1 for f in fields if self._get_value(None, f) is not None)
+        elif obj_id is not None:
+            rows = sum(1 for f in fields if self._get_value(obj_id, f) is not None)
+        else:
+            rows = 0
+
+        # У волн нет строки выбора объекта — панель ниже
+        header_h = 100 if cat == "Waves" else 130
+        panel_h = header_h + rows * ROW_H
         x, y = PANEL_X, PANEL_Y
 
         overlay = pygame.Surface((PANEL_W, panel_h), pygame.SRCALPHA)
@@ -257,8 +271,17 @@ class BalanceEditor:
         cy += 30
 
         if cat == "Waves":
-            info = self.small_font.render("(Волны — на следующем шаге)", True, (200, 200, 160))
-            screen.blit(info, (x + pad, cy))
+            # Волны: без выбора объекта, сразу поля-ползунки
+            sub = self.small_font.render("Глобальные настройки волн (WAVE_CONFIG)",
+                                         True, (200, 200, 160))
+            screen.blit(sub, (x + pad, cy))
+            cy += 26
+            for field in fields:
+                val = self._get_value(None, field)
+                if val is None:
+                    continue
+                self._draw_slider_row(screen, x, cy, field, val)
+                cy += ROW_H
             self._draw_status(screen, x + pad, y + panel_h - 24)
             return
 
