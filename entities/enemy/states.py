@@ -3,7 +3,7 @@
 class EnemyStates:
     """Состояния врага: spawning → alive → dying → corpse → fading → dead.
 
-    spawning — проявляется из пустоты (альфа 0 → 255), стоит на месте
+    spawning — проявляется из пустоты (альфа 0 → 255), уже движется
     dying  — падает на спину (поворот до 45°)
     corpse — лежит corpse_duration секунд
     fading — растворяется fade_duration секунд (альфа 255 → 0)
@@ -39,7 +39,8 @@ class EnemyStates:
             self.spawn_timer -= dt
             if self.spawn_timer <= 0:
                 self.state = 'alive'
-            return False  # во время появления враг не двигается
+            # НЕ возвращаем False: враг движется одновременно с проявлением
+            # из пустоты (альфа 0→255 идёт по spawn_timer, а движение — ниже)
 
         if self.state == 'fading':
             self.fade_timer -= dt
