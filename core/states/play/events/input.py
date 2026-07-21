@@ -15,7 +15,8 @@ class InputEvents:
         for event in events:
             # === КОНСОЛЬ ===
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN and not state.console.active:
+                # Открыть/закрыть консоль по ` (backquote) — не печатается внутрь
+                if event.key == pygame.K_BACKQUOTE:
                     state.console.toggle()
                     return
                 if state.console.active:
