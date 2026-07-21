@@ -15,18 +15,29 @@ class EnemyMovement:
         self.stuck_timer = 0
         self.stuck_threshold = 0.5
 
-    def _offset_target(self, target_x, target_y, dx, dy, distance):
-        """Сдвигает целевую точку вбок перпендикулярно движению.
+    def _offset_target(self, target_x, target_y, seg_x, seg_y):
+        """Сдвигает целевую точку вбок перпендикулярно сегменту дороги.
 
-        Даёт врагам постоянное боковое смещение (lane_offset), чтобы они
-        шли толпой, а не по одной линии. Перпендикуляр к (dx,dy) — это
-        (-dy, dx), нормированный.
+        Перпендикуляр берётся от направления сегмента (пред. waypoint ->
+        текущий), а НЕ от вектора враг->цель: у поворота последний
+        становится крошечным и его перпендикуляр скачет каждый кадр —
+        враг начинал кружиться. Направление сегмента постоянно.
         """
-        if distance < 1:
+        seg_len = math.hypot(seg_x, seg_y)
+        if seg_len < 1:
             return target_x, target_y
-        nx, ny = -dy / distance, dx / distance
+        nx, ny = -seg_y / seg_len, seg_x / seg_len
         shift = self.enemy.lane_offset * LANE_HALF_WIDTH
         return target_x + nx * shift, target_y + ny * shift
+
+    def _segment_dir(self, path, index):
+        """Вектор направления сегмента дороги, ведущего в waypoint index."""
+        if index <= 0:
+            # первый сегмент: от текущей позиции к точке
+            return path[index][0] - self.enemy.x, path[index][1] - self.enemy.y
+        px, py = path[index - 1]
+        cx, cy = path[index]
+        return cx - px, cy - py
     
     def update(self, dt: float):
         """Обновляет движение врага"""
@@ -85,9 +96,11 @@ class EnemyMovement:
         else:
             enemy.direction = 'down' if dy > 0 else 'up'
         
-        # Смещаем цель вбок для «толпы»; продвижение по waypoint считаем
-        # по исходной дистанции до центра, чтобы враг не застревал.
-        aim_x, aim_y = self._offset_target(target_x, target_y, dx, dy, distance)
+        # Смещаем цель вбок для «толпы». Перпендикуляр берём от направления
+        # сегмента дороги (стабилен на поворотах), идём к смещённой точке и
+        # по ней считаем достижение waypoint.
+        seg_x, seg_y = self._segment_dir(path, enemy.current_target_index)
+        aim_x, aim_y = self._offset_target(target_x, target_y, seg_x, seg_y)
         adx = aim_x - enemy.x
         ady = aim_y - enemy.y
         aim_dist = math.hypot(adx, ady)
@@ -97,10 +110,12 @@ class EnemyMovement:
 
         new_x = enemy.x
         new_y = enemy.y
+        reached = False
 
-        if self.move_distance >= distance:
-            new_x = target_x
-            new_y = target_y
+        if self.move_distance >= aim_dist:
+            new_x = aim_x
+            new_y = aim_y
+            reached = True
         elif aim_dist > 0:
             new_x += (adx / aim_dist) * self.move_distance
             new_y += (ady / aim_dist) * self.move_distance
@@ -109,7 +124,7 @@ class EnemyMovement:
         if not self._check_collision(new_x, new_y):
             enemy.x = new_x
             enemy.y = new_y
-            if self.move_distance >= distance:
+            if reached:
                 enemy.current_target_index += 1
             self.stuck_timer = 0
         else:
@@ -157,14 +172,15 @@ class EnemyMovement:
         current_speed = enemy.speed * enemy.effects.slow_multiplier
         self.move_distance = current_speed * dt
 
-        aim_x, aim_y = self._offset_target(target_x, target_y, dx, dy, distance)
+        seg_x, seg_y = self._segment_dir(path, enemy.current_target_index)
+        aim_x, aim_y = self._offset_target(target_x, target_y, seg_x, seg_y)
         adx = aim_x - enemy.x
         ady = aim_y - enemy.y
         aim_dist = math.hypot(adx, ady)
 
-        if self.move_distance >= distance:
-            enemy.x = target_x
-            enemy.y = target_y
+        if self.move_distance >= aim_dist:
+            enemy.x = aim_x
+            enemy.y = aim_y
             enemy.current_target_index += 1
         elif aim_dist > 0:
             enemy.x += (adx / aim_dist) * self.move_distance
