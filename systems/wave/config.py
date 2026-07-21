@@ -60,6 +60,9 @@ BASE_WAVES = [
 # между запусками, а формулы в этом .py остаются нетронутыми.
 WAVES_OVERRIDE_PATH = "data/configs/waves_override.json"
 
+# Чистые значения формул ДО наложения оверрайда — для Reset в редакторе.
+WAVE_CONFIG_DEFAULTS = dict(WAVE_CONFIG)
+
 
 def _apply_waves_override():
     import json

@@ -173,6 +173,50 @@ class BalanceModel:
         except Exception as e:
             self.error = f"save {WAVES_OVERRIDE_PATH}: {e}"
 
+    # --- Сброс к оригиналу ---
+
+    def reset_category(self, category):
+        """Возвращает категорию к исходным значениям.
+
+        Towers/Enemies — восстановление из *.json.bak (если есть).
+        Waves — удаление оверрайда и возврат WAVE_CONFIG к формулам.
+        Возвращает строку-результат для статуса.
+        """
+        if category == "Towers":
+            return self._restore_from_backup(TOWERS_PATH, "towers")
+        if category == "Enemies":
+            return self._restore_from_backup(ENEMIES_PATH, "enemies")
+        if category == "Waves":
+            return self._reset_waves()
+        return "nothing to reset"
+
+    def _restore_from_backup(self, path, which):
+        bak = path + ".bak"
+        if not os.path.exists(bak):
+            return f"{which}: нет бэкапа (.bak) — правок ещё не было"
+        try:
+            shutil.copyfile(bak, path)
+        except Exception as e:
+            self.error = f"restore {path}: {e}"
+            return "ERR"
+        self.reload()
+        return f"{which}: возвращено к оригиналу (.bak)"
+
+    def _reset_waves(self):
+        from systems.wave.config import WAVE_CONFIG, WAVE_CONFIG_DEFAULTS
+        # Возвращаем живой WAVE_CONFIG к формульным дефолтам
+        for f in WAVE_FIELDS:
+            if f in WAVE_CONFIG_DEFAULTS:
+                WAVE_CONFIG[f] = WAVE_CONFIG_DEFAULTS[f]
+        # Удаляем оверрайд-файл
+        if os.path.exists(WAVES_OVERRIDE_PATH):
+            try:
+                os.remove(WAVES_OVERRIDE_PATH)
+            except Exception as e:
+                self.error = f"remove override: {e}"
+                return "ERR"
+        return "waves: возвращено к формулам (оверрайд удалён)"
+
     # --- Сохранение ---
 
     def _save(self, path, data):

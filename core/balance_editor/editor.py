@@ -50,6 +50,8 @@ class BalanceEditor:
         self._plus_rects = {}      # field -> rect
         self._obj_prev_rect = None
         self._obj_next_rect = None
+        self._reset_rect = None
+        self._reload_rect = None
 
     # --- Открытие/закрытие ---
 
@@ -157,6 +159,14 @@ class BalanceEditor:
         return True
 
     def _handle_mouse_down(self, pos):
+        # Кнопки Reload / Reset
+        if self._reload_rect and self._reload_rect.collidepoint(pos):
+            self.model.reload()
+            self.status = "Перечитано с диска"
+            return
+        if self._reset_rect and self._reset_rect.collidepoint(pos):
+            self.status = self.model.reset_category(self._category())
+            return
         # Вкладки категорий
         for rect, idx in self._tab_rects:
             if rect.collidepoint(pos):
@@ -227,6 +237,8 @@ class BalanceEditor:
         self._plus_rects = {}
         self._obj_prev_rect = None
         self._obj_next_rect = None
+        self._reset_rect = None
+        self._reload_rect = None
 
         cat = self._category()
         fields = self._fields()
@@ -256,6 +268,21 @@ class BalanceEditor:
         # Заголовок
         title = self.font.render("BALANCE EDITOR", True, (255, 255, 255))
         screen.blit(title, (x + pad, cy))
+
+        # Кнопки Reload / Reset справа в шапке
+        btn_h = 22
+        reset_w, reload_w = 60, 70
+        reset_x = x + PANEL_W - pad - reset_w
+        reload_x = reset_x - 8 - reload_w
+        self._reload_rect = pygame.Rect(reload_x, cy, reload_w, btn_h)
+        self._reset_rect = pygame.Rect(reset_x, cy, reset_w, btn_h)
+        for rect, label, col in ((self._reload_rect, "Reload", (180, 200, 255)),
+                                 (self._reset_rect, "Reset", (255, 190, 170))):
+            pygame.draw.rect(screen, (50, 55, 75), rect, border_radius=4)
+            pygame.draw.rect(screen, (110, 130, 170), rect, 1, border_radius=4)
+            ls = self.small_font.render(label, True, col)
+            screen.blit(ls, (rect.centerx - ls.get_width() // 2,
+                             rect.centery - ls.get_height() // 2))
         cy += 30
 
         # Вкладки категорий (кликабельные)
