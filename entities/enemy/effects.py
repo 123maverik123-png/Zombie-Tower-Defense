@@ -172,6 +172,9 @@ class EnemyEffects:
             return
         if self.water_effect_active:
             return
+        # Уже горит — повторное попадание не продлевает и не усиливает
+        if self.fire_effect_active:
+            return
         self.fire_effect_active = True
         self.fire_effect_timer = duration
         self.fire_damage_timer = 0.0
@@ -180,6 +183,9 @@ class EnemyEffects:
     
     def apply_water_effect(self, duration: float = 10.0):
         if self.enemy.is_flying:
+            return
+        # Уже мокрый — повторное попадание не продлевает эффект
+        if self.water_effect_active:
             return
         if self.fire_effect_active:
             self.fire_effect_active = False
@@ -196,6 +202,10 @@ class EnemyEffects:
 
     def apply_acid_effect(self, damage: int, interval: float, duration: float):
         if self.enemy.is_flying:
+            return
+        # Кислота уже разъедает — повторное попадание не продлевает и не усиливает DoT
+        # (прямой урон снаряда наносится отдельно через take_damage)
+        if self.acid_effect_active:
             return
         self.acid_effect_active = True
         self.acid_damage = damage
