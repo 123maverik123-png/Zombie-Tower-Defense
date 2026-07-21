@@ -51,10 +51,13 @@ class EnemyMovement:
         enemy = self.enemy
         
         enemy.combat.reset_attack_state()
-        
-        # Проверяем, может ли враг атаковать ворота или стены
-        self._check_wall_attack()
-        
+
+        # Проверяем атаку/координацию у ворот и стен.
+        # Если метод сам обработал движение (идёт к назначенной стене) —
+        # прерываем обычное движение по пути.
+        if self._check_wall_attack():
+            return
+
         # Если враг летающий — игнорирует стены и ворота
         if enemy.is_flying:
             self._move_flying(dt)
@@ -68,6 +71,7 @@ class EnemyMovement:
             else:
                 enemy.combat.is_attacking_wall = False
                 enemy.combat.target_wall = None
+                enemy.combat.assigned_wall = None
                 enemy.combat.is_looking_for_exit = False
                 enemy.combat.is_at_gate = False
                 enemy.combat.gate_attack_order = 0
@@ -195,30 +199,76 @@ class EnemyMovement:
             enemy.animation_frame += dt * 8
         enemy.image = enemy.visuals.get_current_frame()
     
-    def _check_wall_attack(self):
-        """Проверяет, может ли враг атаковать ворота или стены."""
+    def _check_wall_attack(self) -> bool:
+        """Атака/координация у ворот и стен.
+
+        У ворот включается координация: если ворота штурмует >3 зомби,
+        лишние идут на примыкающие стены (choose_wall_target).
+        Возвращает True, если сам обработал движение зомби (идёт к
+        назначенной стене) и обычное движение по пути нужно пропустить.
+        """
         enemy = self.enemy
         if not enemy.state:
-            return
-        
+            return False
+
         if enemy.is_flying:
-            return
-        
+            return False
+
+        combat = enemy.combat
+
+        # Если уже назначена стена — идём к ней и бьём при достижении
+        if combat.assigned_wall is not None:
+            aw = combat.assigned_wall
+            if not aw.alive:
+                combat.assigned_wall = None
+            elif combat.can_attack_wall(aw):
+                combat.attack_wall(aw, 0.016)
+                return False  # дальше update обработает is_attacking_wall
+            else:
+                self._move_toward(aw.x, aw.y)
+                return True
+
         for gate in enemy.state.gates:
             if not gate.alive:
                 continue
             dist = ((enemy.x - gate.x) ** 2 + (enemy.y - gate.y) ** 2) ** 0.5
             if dist < 60:
+                choice = combat.choose_wall_target(gate)
+                if choice == 'reroute':
+                    combat.is_looking_for_exit = True
+                    return False
+                if choice is not None:  # назначена стена
+                    combat.assigned_wall = choice
+                    self._move_toward(choice.x, choice.y)
+                    return True
                 enemy.combat.attack_wall(gate, 0.016)
-                return
-        
+                return False
+
         for wall in enemy.state.walls:
             if not wall.alive:
                 continue
             dist = ((enemy.x - wall.x) ** 2 + (enemy.y - wall.y) ** 2) ** 0.5
             if dist < 50:
                 enemy.combat.attack_wall(wall, 0.016)
-                return
+                return False
+        return False
+
+    def _move_toward(self, tx, ty):
+        """Прямое движение к точке (к назначенной стене), с анимацией."""
+        enemy = self.enemy
+        dt = 0.016
+        dx, dy = tx - enemy.x, ty - enemy.y
+        dist = math.hypot(dx, dy)
+        if dist < 1:
+            return
+        self._face(dx, dy)
+        step = enemy.speed * enemy.effects.slow_multiplier * dt
+        enemy.x += (dx / dist) * min(step, dist)
+        enemy.y += (dy / dist) * min(step, dist)
+        enemy.rect.x = enemy.x - enemy.width // 2
+        enemy.rect.y = enemy.y - enemy.height // 2
+        enemy.animation_frame += dt * 8
+        enemy.image = enemy.visuals.get_current_frame()
     
     def _move_to_exit(self, dt: float):
         """Движение к обходной цели (в обход ворот)"""

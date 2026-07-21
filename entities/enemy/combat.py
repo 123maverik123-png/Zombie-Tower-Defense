@@ -22,6 +22,89 @@ class EnemyCombat:
         self.gate_attack_order = 0  # порядковый номер у ворот
         self.is_looking_for_exit = False  # ищет выход
         self.wall_side = None  # 'left' или 'right'
+        self.assigned_wall = None  # стена, назначенная под атаку (идёт к ней)
+
+    # ===== Координация штурма ворот и стен =====
+
+    def count_attackers(self, target) -> int:
+        """Сколько живых зомби атакуют цель ИЛИ назначены/идут к ней."""
+        enemy = self.enemy
+        if not enemy.state or target is None:
+            return 0
+        n = 0
+        for other in enemy.state.enemies:
+            if not other.alive:
+                continue
+            oc = other.combat
+            if oc.target_wall is target and oc.is_attacking_wall:
+                n += 1
+            elif oc.assigned_wall is target:
+                n += 1
+        return n
+
+    def _gate_wall_chain(self, gate):
+        """Стены, примыкающие к воротам, двумя ветками вдоль линии обороны.
+
+        Ворота 'h' (перекрывают вертикальный проход) → стены тянутся влево и
+        вправо; 'v' → вверх и вниз. Идём по grid, пока есть смежная стена.
+        Возвращает (branch_a, branch_b) — списки стен по возрастанию расстояния
+        от ворот (первая — вплотную к воротам).
+        """
+        enemy = self.enemy
+        if not enemy.state or not hasattr(gate, 'wx'):
+            return [], []
+        by_cell = {}
+        for w in enemy.state.walls:
+            if w.alive and hasattr(w, 'wx'):
+                by_cell[(w.wx, w.wy)] = w
+
+        orient = getattr(gate, 'orientation', 'h')
+        if orient == 'h':
+            dirs = ((-1, 0), (1, 0))   # влево, вправо
+        else:
+            dirs = ((0, -1), (0, 1))   # вверх, вниз
+
+        branches = []
+        for dx, dy in dirs:
+            chain = []
+            cx, cy = gate.wx + dx, gate.wy + dy
+            while (cx, cy) in by_cell:
+                chain.append(by_cell[(cx, cy)])
+                cx += dx
+                cy += dy
+            branches.append(chain)
+        return branches[0], branches[1]
+
+    def choose_wall_target(self, gate):
+        """Выбирает стену для атаки, когда ворота перегружены (>3 штурмующих).
+
+        Возвращает:
+          - Wall  — идти атаковать эту стену;
+          - None  — штурмовать сами ворота (ещё есть места);
+          - 'reroute' — все стены заняты, искать обход.
+        """
+        if self.count_attackers(gate) <= 3:
+            return None
+
+        branch_a, branch_b = self._gate_wall_chain(gate)
+        if not branch_a and not branch_b:
+            return 'reroute'
+
+        # Случайная сторона (запоминаем за зомби), при пустой — другая
+        if self.wall_side not in ('a', 'b'):
+            self.wall_side = random.choice(['a', 'b'])
+        order = ([branch_a, branch_b] if self.wall_side == 'a'
+                 else [branch_b, branch_a])
+
+        enemy = self.enemy
+        for branch in order:
+            free = [w for w in branch if self.count_attackers(w) == 0]
+            if free:
+                # Дальняя от зомби = ближе к порталу (конец линии обороны)
+                free.sort(key=lambda w: (enemy.x - w.x) ** 2 + (enemy.y - w.y) ** 2)
+                return free[-1]
+        return 'reroute'
+
     
     def take_damage(self, amount: int, damage_type: str = 'physical') -> int:
         """Наносит урон с учётом уклонения"""
