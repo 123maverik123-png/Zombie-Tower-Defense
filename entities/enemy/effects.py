@@ -121,6 +121,8 @@ class EnemyEffects:
                 self.acid_effect_active = False
     
     def apply_slow(self, multiplier: float, duration: float):
+        if self.enemy.is_flying:
+            return
         effective_multiplier = 1.0 - (1.0 - multiplier) * (1.0 - self.slow_resistance)
         self.slow_multiplier = min(self.slow_multiplier, effective_multiplier)
         self.slow_timer = max(self.slow_timer, duration)
@@ -142,6 +144,8 @@ class EnemyEffects:
             })
     
     def apply_fire_effect(self, duration: float = 3.0, dot_damage: int = 4, dot_interval: float = 0.5):
+        if self.enemy.is_flying:
+            return
         if self.water_effect_active:
             return
         self.fire_effect_active = True
@@ -151,6 +155,8 @@ class EnemyEffects:
         self.fire_dot_interval = dot_interval
     
     def apply_water_effect(self, duration: float = 10.0):
+        if self.enemy.is_flying:
+            return
         if self.fire_effect_active:
             self.fire_effect_active = False
             self.fire_effect_timer = 0
@@ -159,10 +165,14 @@ class EnemyEffects:
         self.water_effect_timer = duration
     
     def apply_freeze_effect(self, duration: float = 3.0):
+        if self.enemy.is_flying:
+            return
         self.freeze_effect_active = True
         self.freeze_effect_timer = duration
-    
+
     def apply_acid_effect(self, damage: int, interval: float, duration: float):
+        if self.enemy.is_flying:
+            return
         self.acid_effect_active = True
         self.acid_damage = damage
         self.acid_interval = interval
