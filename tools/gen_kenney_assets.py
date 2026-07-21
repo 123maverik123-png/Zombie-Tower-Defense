@@ -101,23 +101,85 @@ def corner_tile(base: Image.Image, road: Image.Image, corner: str) -> Image.Imag
 
 
 def make_portal(road: Image.Image) -> Image.Image:
+    """Красно-фиолетовый портал: тёмное жерло, светящееся кольцо, вихрь."""
     out = road.copy()
-    d = ImageDraw.Draw(out)
+    # Слой свечения (аддитивно накладываем)
+    glow = Image.new("RGBA", (T, T), (0, 0, 0, 0))
+    dg = ImageDraw.Draw(glow)
     cx = cy = T // 2
-    for r, col in ((46, (40, 160, 90, 255)), (38, (70, 220, 130, 255)),
-                   (26, (150, 255, 190, 255)), (12, (235, 255, 245, 255))):
-        d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=col)
+    # Внешнее фиолетовое сияние -> к центру ярко-розовое -> тёмное жерло
+    rings = [
+        (52, (70, 20, 90, 70)),     # тусклый фиолетовый ореол
+        (44, (120, 30, 140, 150)),  # фиолет
+        (37, (180, 40, 130, 220)),  # пурпур
+        (30, (230, 60, 90, 255)),   # красно-розовое кольцо
+        (23, (255, 110, 140, 255)), # яркая кромка
+        (18, (90, 20, 70, 255)),    # переход к жерлу
+        (12, (40, 10, 50, 255)),    # тёмное жерло
+        (6,  (15, 5, 25, 255)),     # чёрная сердцевина
+    ]
+    for r, col in rings:
+        dg.ellipse((cx - r, cy - r, cx + r, cy + r), fill=col)
+    # Вихревые блики-искры по кольцу
+    import math
+    for i in range(10):
+        a = i * (2 * math.pi / 10)
+        rr = 27 + (3 if i % 2 else -2)
+        x = cx + int(rr * math.cos(a))
+        y = cy + int(rr * math.sin(a))
+        dg.ellipse((x - 2, y - 2, x + 2, y + 2), fill=(255, 180, 210, 255))
+    out = Image.alpha_composite(out, glow)
     return out
 
 
+def _crystal(size: int) -> Image.Image:
+    """Бело-лазурно-голубой кристалл (самоцвет-октаэдр) с гранями и бликом."""
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    cx = size // 2
+    top = int(size * 0.10)
+    bot = int(size * 0.94)
+    midy = int(size * 0.46)
+    half = int(size * 0.30)
+    outl = (18, 40, 70, 255)
+    # Основные грани октаэдра
+    LAZ = (90, 175, 235)      # лазурный
+    LAZ_D = (52, 120, 190)    # тень грани
+    LAZ_L = (170, 225, 250)   # светлая грань
+    WHITE = (235, 250, 255)   # блик
+    # Левая (тёмная) и правая (светлая) верхние грани
+    d.polygon([(cx, top), (cx - half, midy), (cx, midy)], fill=LAZ_D)
+    d.polygon([(cx, top), (cx + half, midy), (cx, midy)], fill=LAZ_L)
+    # Нижние грани
+    d.polygon([(cx - half, midy), (cx, bot), (cx, midy)], fill=(70, 145, 210))
+    d.polygon([(cx + half, midy), (cx, bot), (cx, midy)], fill=LAZ)
+    # Контур
+    d.line([(cx, top), (cx - half, midy), (cx, bot), (cx + half, midy), (cx, top)],
+           fill=outl, width=2)
+    d.line([(cx, top), (cx, bot)], fill=(120, 190, 235, 180), width=1)
+    d.line([(cx - half, midy), (cx + half, midy)], fill=(120, 190, 235, 180), width=1)
+    # Белый блик на правой верхней грани
+    d.polygon([(cx + 3, top + 4), (cx + half - 6, midy - 3), (cx + 3, midy - 3)],
+              fill=WHITE)
+    return img
+
+
 def make_castle(base: Image.Image, biome: str) -> Image.Image:
+    """Конечная точка пути — кристалл, который защищаем (бело-лазурный)."""
     out = base.copy()
-    b = load_tile(CASTLE_SPRITE[biome]).resize((112, 112))
-    # тень под зданием
-    sh = Image.new("RGBA", (T, T), (0, 0, 0, 0))
-    ImageDraw.Draw(sh).ellipse((14, 70, 114, 118), fill=(0, 0, 0, 60))
-    out = Image.alpha_composite(out, sh)
-    out.paste(b, (8, 4), b)
+    # Свечение-ореол под/вокруг кристалла
+    glow = Image.new("RGBA", (T, T), (0, 0, 0, 0))
+    dg = ImageDraw.Draw(glow)
+    cx = cy = T // 2
+    for r, col in ((50, (120, 200, 240, 40)), (40, (150, 220, 250, 60)),
+                   (30, (200, 240, 255, 80))):
+        dg.ellipse((cx - r, cy - r, cx + r, cy + r), fill=col)
+    # Тень-подставка
+    dg.ellipse((34, 92, 94, 116), fill=(20, 40, 70, 90))
+    out = Image.alpha_composite(out, glow)
+    # Сам кристалл по центру, чуть приподнят
+    cr = _crystal(96)
+    out.paste(cr, (T // 2 - 48, T // 2 - 54), cr)
     return out
 
 
