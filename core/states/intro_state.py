@@ -62,6 +62,30 @@ LEVEL_SUBTITLES = {
 DEFAULT_LEVEL_SUBTITLE = "Орда наступает. Держи оборону."
 
 
+# Композиция каждого слайда сюжета — своя, чтобы сцены не повторялись.
+# Ключи:
+#   portal  — 0..1 «раскрытость» портала (0 нет, 1 полный) или None
+#   crystal — яркость кристалла 0..1 или None (нет в кадре)
+#   zombies — плотность марша орды 0..1 (0 нет)
+#   shake   — сила тряски земли 0..1 (осада)
+#   embers  — падающие угли/пепел 0..1 (атмосфера разрушения)
+#   tint    — цветовой оттенок оверлея сцены (r,g,b)
+SLIDE_SCENES = [
+    # 1. Мир держался на свете Кристалла — только кристалл, покой.
+    dict(portal=None, crystal=1.0, zombies=0.0, shake=0.0, embers=0.0, tint=(20, 30, 45)),
+    # 2. Печать треснула — портал едва проступает, кристалл тускнеет.
+    dict(portal=0.25, crystal=0.7, zombies=0.0, shake=0.05, embers=0.15, tint=(40, 20, 40)),
+    # 3. Портал разорвал землю — полностью открыт, первые зомби.
+    dict(portal=1.0, crystal=0.55, zombies=0.35, shake=0.2, embers=0.4, tint=(60, 16, 30)),
+    # 4. Орда идёт к Кристаллу — плотный марш через весь кадр.
+    dict(portal=1.0, crystal=0.5, zombies=1.0, shake=0.15, embers=0.5, tint=(55, 14, 22)),
+    # 5. Стены пали — осада, тряска, густой пепел, кристалл почти гаснет.
+    dict(portal=0.7, crystal=0.3, zombies=0.8, shake=0.6, embers=0.9, tint=(45, 10, 14)),
+    # 6. Последний хранитель — кристалл вспыхивает ярко, оборона.
+    dict(portal=0.5, crystal=1.0, zombies=0.5, shake=0.1, embers=0.3, tint=(20, 34, 50)),
+]
+
+
 class IntroTimeline:
     """Чистая тайминг-логика интро (без pygame-рендера).
 
@@ -191,13 +215,26 @@ class IntroState(State):
     def _load_scene_assets(self):
         self.bg = self._try_load("assets/images/menu_bg.jpg", convert=True)
         portal_path, castle_path = self._tile_paths()
-        self.portal_img = self._try_load(portal_path)
-        self.castle_img = self._try_load(castle_path)
+        self.portal_img = self._circular(self._try_load(portal_path))
+        self.castle_img = self._circular(self._try_load(castle_path))
         self.zombie_imgs = []
         for i in range(4):
             img = self._try_load(f"assets/sprites/pzombie_normal/right_{i}.png")
             if img:
                 self.zombie_imgs.append(img)
+
+    def _circular(self, img):
+        """Вырезает круг из квадратного тайла, убирая фон дороги/травы
+        по углам (тайлы = круглый объект в квадрате с непрозрачным фоном)."""
+        if img is None:
+            return None
+        w, h = img.get_size()
+        r = min(w, h) // 2
+        mask = pygame.Surface((w, h), pygame.SRCALPHA)
+        pygame.draw.circle(mask, (255, 255, 255, 255), (w // 2, h // 2), r)
+        out = img.convert_alpha()
+        out.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+        return out
 
     def _tile_paths(self):
         """Пути к тем же тайлам портала/кристалла, что показываются в бою.
@@ -272,70 +309,143 @@ class IntroState(State):
         self._draw_hint(screen, sw, sh)
         self._draw_fades(screen, sw, sh)
 
+    def _current_scene(self):
+        """Композиция активного слайда. Для карточки/стартового фейда —
+        нейтральная сцена (кристалл + слабый портал)."""
+        if self.mode != 'long':
+            return dict(portal=0.6, crystal=1.0, zombies=0.0, shake=0.0,
+                        embers=0.2, tint=(24, 32, 46))
+        idx = self.timeline.current_slide()
+        if idx is None:
+            idx = 0
+        return SLIDE_SCENES[min(idx, len(SLIDE_SCENES) - 1)]
+
+    def _scene_blend(self):
+        """Плавный переход композиции между слайдами (0..1 внутри слайда):
+        возвращает интерполированную сцену, чтобы параметры не прыгали
+        скачком на стыке слайдов."""
+        if self.mode != 'long':
+            return self._current_scene()
+        idx = self.timeline.current_slide()
+        if idx is None:
+            return SLIDE_SCENES[0]
+        cur = SLIDE_SCENES[idx]
+        nxt = SLIDE_SCENES[min(idx + 1, len(SLIDE_SCENES) - 1)]
+        # доля времени, прожитая внутри слайда
+        tl = self.timeline
+        local = (tl.elapsed - tl.BLACK_FADE) - idx * tl.slide_dur
+        frac = max(0.0, min(1.0, local / tl.slide_dur))
+        # переход начинаем во второй половине слайда
+        k = max(0.0, (frac - 0.6) / 0.4)
+        out = {}
+        for key in ('portal', 'crystal', 'zombies', 'shake', 'embers'):
+            a = cur.get(key) or 0.0
+            b = nxt.get(key) or 0.0
+            out[key] = a + (b - a) * k
+        # tint интерполируем покомпонентно
+        ta, tb = cur['tint'], nxt['tint']
+        out['tint'] = tuple(int(ta[i] + (tb[i] - ta[i]) * k) for i in range(3))
+        # None-порталы: если оба None — убрать вовсе
+        if cur.get('portal') is None and nxt.get('portal') is None:
+            out['portal'] = 0.0
+        if cur.get('crystal') is None and nxt.get('crystal') is None:
+            out['crystal'] = 0.0
+        return out
+
     def _draw_scene(self, screen, sw, sh, dim=170):
         screen.fill((10, 9, 12))
         if self.bg:
             screen.blit(pygame.transform.scale(self.bg, (sw, sh)), (0, 0))
+
+        sc = self._scene_blend()
+        # Оверлей с оттенком сцены — задаёт настроение каждого слайда.
         overlay = pygame.Surface((sw, sh), pygame.SRCALPHA)
-        overlay.fill((6, 4, 10, dim))
+        tr, tg, tb = sc['tint']
+        overlay.fill((tr // 3, tg // 3, tb // 3, dim))
         screen.blit(overlay, (0, 0))
 
         t = self.timeline.elapsed
-        cy = int(sh * 0.52)
+        # Тряска земли при осаде — сдвигаем всю сцену.
+        shake = sc.get('shake', 0.0)
+        ox = int(math.sin(t * 28) * 7 * shake)
+        oy = int(math.cos(t * 33) * 5 * shake)
+        cy = int(sh * 0.52) + oy
 
-        # Портал слева — пульсирующий, с красно-фиолетовым свечением.
-        if self.portal_img:
+        # Портал слева — «раскрытость» задаёт слайд (0..1).
+        p_open = sc.get('portal') or 0.0
+        if self.portal_img and p_open > 0.02:
             pulse = 1.0 + 0.08 * math.sin(t * 2.2)
-            psize = int(sh * 0.34 * pulse)
+            psize = int(sh * 0.34 * pulse * (0.4 + 0.6 * p_open))
             portal = pygame.transform.smoothscale(self.portal_img, (psize, psize))
-            px = int(sw * 0.16) - psize // 2
+            portal.set_alpha(int(255 * min(1.0, p_open * 1.3)))
+            px = int(sw * 0.16) - psize // 2 + ox
             py = cy - psize // 2
             self._blit_glow(screen, (px + psize // 2, cy), int(psize * 0.72),
-                            (150, 40, 160), alpha=70 + int(30 * math.sin(t * 2.2)))
+                            (150, 40, 160),
+                            alpha=int((70 + 30 * math.sin(t * 2.2)) * p_open))
             screen.blit(portal, (px, py))
 
-        # Кристалл справа — лазурное мягкое свечение.
-        if self.castle_img:
+        # Кристалл справа — яркость задаёт слайд (гаснет при осаде).
+        c_bright = sc.get('crystal') or 0.0
+        if self.castle_img and c_bright > 0.02:
             csize = int(sh * 0.30)
             castle = pygame.transform.smoothscale(self.castle_img, (csize, csize))
-            crx = int(sw * 0.84) - csize // 2
+            castle.set_alpha(int(255 * min(1.0, 0.35 + 0.65 * c_bright)))
+            crx = int(sw * 0.84) - csize // 2 + ox
             cry = cy - csize // 2
-            glow = 60 + int(25 * math.sin(t * 1.5))
+            glow = int((40 + 25 * math.sin(t * 1.5)) * c_bright)
             self._blit_glow(screen, (crx + csize // 2, cy), int(csize * 0.7),
                             TEAL_GLOW, alpha=glow)
             screen.blit(castle, (crx, cry))
 
-        # Зомби бредут из портала к кристаллу (только в сюжетном режиме,
-        # заметны со 2-го слайда — «из тьмы хлынули»).
-        if self.mode == 'long' and self.zombie_imgs:
-            self._draw_marching_zombies(screen, sw, sh, cy, t)
+        # Марш орды — плотность задаёт слайд.
+        z_density = sc.get('zombies', 0.0)
+        if self.zombie_imgs and z_density > 0.02:
+            self._draw_marching_zombies(screen, sw, sh, cy, t, z_density, ox)
 
-    def _draw_marching_zombies(self, screen, sw, sh, cy, t):
+        # Падающий пепел/угли — атмосфера разрушения.
+        embers = sc.get('embers', 0.0)
+        if embers > 0.02:
+            self._draw_embers(screen, sw, sh, t, embers)
+
+    def _draw_marching_zombies(self, screen, sw, sh, cy, t, density, ox=0):
         start_x = sw * 0.20
         end_x = sw * 0.78
         span = end_x - start_x
-        cur = self.timeline.current_slide()
-        # Плотность и видимость нарастают ко 2-3 слайду.
-        visible = 0.0 if (cur is None or cur == 0) else 1.0
-        if visible <= 0:
-            return
+        # Число зомби в кадре растёт с плотностью слайда (2..10).
+        count = max(2, int(2 + density * 8))
         zsize = int(sh * 0.11)
-        count = 6
         for i in range(count):
-            # Каждый зомби на своей фазе марша, зациклен.
             phase = (t * 0.06 + i / count) % 1.0
-            zx = start_x + phase * span
+            zx = start_x + phase * span + ox
             row = (i % 3) - 1
             zy = cy + row * int(sh * 0.06) + int(4 * math.sin(t * 3 + i))
             frame = self.zombie_imgs[int((t * 6 + i) % len(self.zombie_imgs))]
             z = pygame.transform.smoothscale(frame, (zsize, zsize))
             # Силуэт: затемняем и делаем полупрозрачным у краёв пути.
-            edge = min(phase, 1.0 - phase) * 2.0      # 0 у краёв, 1 в центре
-            alpha = int(60 + 150 * min(1.0, edge * 1.4) * visible)
+            edge = min(phase, 1.0 - phase) * 2.0
+            alpha = int((60 + 150 * min(1.0, edge * 1.4)) * min(1.0, density * 1.2))
             dark = z.copy()
             dark.fill((25, 20, 30, 255), special_flags=pygame.BLEND_RGBA_MULT)
             dark.set_alpha(alpha)
             screen.blit(dark, (int(zx - zsize // 2), int(zy - zsize // 2)))
+
+    def _draw_embers(self, screen, sw, sh, t, intensity):
+        """Медленно падающие угольки — детерминированы по индексу (без random)."""
+        count = int(30 * intensity)
+        for i in range(count):
+            # Псевдослучайные, но стабильные позиции по индексу.
+            seed_x = (i * 73 % 100) / 100.0
+            speed = 0.3 + (i * 37 % 50) / 100.0
+            fall = (t * speed * 40 + i * 53) % (sh + 40)
+            ex = int(seed_x * sw + math.sin(t * 0.7 + i) * 20)
+            ey = int(fall) - 20
+            size = 2 + (i % 3)
+            flick = 150 + int(80 * math.sin(t * 5 + i))
+            col = (230, 120 + (i % 40), 40, max(40, min(255, flick)))
+            surf = pygame.Surface((size, size), pygame.SRCALPHA)
+            surf.fill(col)
+            screen.blit(surf, (ex, ey))
 
     def _blit_glow(self, screen, center, radius, color, alpha=80):
         d = radius * 2
