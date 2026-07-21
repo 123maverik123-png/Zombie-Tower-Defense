@@ -30,6 +30,13 @@ class EnemyMovement:
         shift = self.enemy.lane_offset * LANE_HALF_WIDTH
         return target_x + nx * shift, target_y + ny * shift
 
+    def _face(self, vx, vy):
+        """Ставит direction спрайта по вектору (vx,vy)."""
+        if abs(vx) > abs(vy):
+            self.enemy.direction = 'right' if vx > 0 else 'left'
+        else:
+            self.enemy.direction = 'down' if vy > 0 else 'up'
+
     def _segment_dir(self, path, index):
         """Вектор направления сегмента дороги, ведущего в waypoint index."""
         if index <= 0:
@@ -90,12 +97,7 @@ class EnemyMovement:
         
         enemy.dx = dx
         enemy.dy = dy
-        
-        if abs(dx) > abs(dy):
-            enemy.direction = 'right' if dx > 0 else 'left'
-        else:
-            enemy.direction = 'down' if dy > 0 else 'up'
-        
+
         # Смещаем цель вбок для «толпы». Перпендикуляр берём от направления
         # сегмента дороги (стабилен на поворотах), идём к смещённой точке и
         # по ней считаем достижение waypoint.
@@ -104,6 +106,10 @@ class EnemyMovement:
         adx = aim_x - enemy.x
         ady = aim_y - enemy.y
         aim_dist = math.hypot(adx, ady)
+
+        # Направление спрайта — по вектору сегмента дороги, а не враг->цель:
+        # у поворота последний мал и прыгает знаком, спрайт дёргался на 90°.
+        self._face(seg_x, seg_y)
 
         current_speed = enemy.speed * enemy.effects.slow_multiplier
         self.move_distance = current_speed * dt
@@ -163,16 +169,12 @@ class EnemyMovement:
         
         enemy.dx = dx
         enemy.dy = dy
-        
-        if abs(dx) > abs(dy):
-            enemy.direction = 'right' if dx > 0 else 'left'
-        else:
-            enemy.direction = 'down' if dy > 0 else 'up'
-        
+
         current_speed = enemy.speed * enemy.effects.slow_multiplier
         self.move_distance = current_speed * dt
 
         seg_x, seg_y = self._segment_dir(path, enemy.current_target_index)
+        self._face(seg_x, seg_y)
         aim_x, aim_y = self._offset_target(target_x, target_y, seg_x, seg_y)
         adx = aim_x - enemy.x
         ady = aim_y - enemy.y
