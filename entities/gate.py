@@ -22,6 +22,9 @@ class Gate(Entity):
         self.height = 50
         # Визуальный размер = полный тайл, чтобы стены/ворота соприкасались
         self.draw_size = tile_size
+        # Grid-координаты клетки (для соседства со стенами)
+        self.wx = int(x // tile_size)
+        self.wy = int(y // tile_size)
         self.rect = pygame.Rect(x - self.width//2, y - self.height//2, self.width, self.height)
         self.is_gate = True
         self.orientation = orientation if orientation in ('h', 'v') else 'h'

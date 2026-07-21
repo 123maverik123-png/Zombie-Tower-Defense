@@ -36,7 +36,7 @@ STONE_D = (84, 80, 76)
 OUT = (16, 15, 18)
 
 # Толщина осевой «балки» (общая для стен и рамы ворот) — залог стыковки
-BEAM_HALF = 8   # балка занимает центр по оси: [16-8 .. 16+8) = 16 px шириной
+BEAM_HALF = 11   # балка [16-11 .. 16+11) = 22 px из 32 (~69% тайла)
 
 
 def px(g, x, y, c):
@@ -89,7 +89,10 @@ def _stone_fill(g, mask):
         sx = (x + (BW // 2 if row % 2 else 0))
         in_col_seam = (sx % BW == 0)      # вертикальный шов между блоками
         in_row_seam = (y % BH == 0)       # горизонтальный шов между рядами
-        if in_col_seam or in_row_seam:
+        on_edge = (x == 0 or x == GW - 1 or y == 0 or y == GH - 1)
+        if on_edge:
+            g[y][x] = STONE              # кромка тайла — ровный камень (стык)
+        elif in_col_seam or in_row_seam:
             g[y][x] = STONE_D             # затенённый шов
         elif (sx % BW == 1) or (y % BH == 1):
             g[y][x] = STONE_L             # блик по верх-левой кромке камня
@@ -129,10 +132,6 @@ def _iron_frame(g, mask):
     for (x, y) in edge1:
         if (x, y - 1) not in mset:
             g[y][x] = IRON_L
-    # заклёпки-усиление вдоль рамки, регулярно (как HAZARD-точки у ворот)
-    for (x, y) in edge1:
-        if (x % 5 == 0 and y % 5 == 0):
-            g[y][x] = HAZARD
 
 
 def _mask_straight(horizontal):

@@ -64,8 +64,7 @@ class PlayState(State):
         self.building_mode = False
         self.wall_placement_mode = False
         self.selected_wall_type = 'gate'
-        self.selected_wall_variant = 'h'  # h/v/tl/tr/bl/br — форма стены
-        self.gate_orientation_override = None  # None=авто по тайлу, 'h'/'v'=ручной
+        self.selected_wall_variant = 'h'  # h/v/tl/tr/bl/br — авто по соседям при постройке
         self.mouse_pos = (0, 0)
         self.wave_delay = 0.0
         self.game_speed = 1.0

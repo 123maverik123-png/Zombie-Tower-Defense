@@ -47,12 +47,21 @@ class Wall(Entity):
         self.height = 40
         # Визуальный размер = полный тайл, чтобы стены соприкасались с воротами
         self.draw_size = tile_size
+        # Grid-координаты клетки (для автоориентации по соседям)
+        self.wx = int(x // tile_size)
+        self.wy = int(y // tile_size)
         self.rect = pygame.Rect(x - self.width//2, y - self.height//2, self.width, self.height)
         self.is_gate = False
         self.variant = variant if variant in WALL_VARIANTS else 'h'
         self.upgrades = FortifyUpgrades(self, base_cost=80, upgrade_cost=60, hp_add=150)
 
         self._create_image()
+
+    def set_variant(self, variant: str):
+        """Меняет форму стены и перерисовывает спрайт."""
+        if variant in WALL_VARIANTS and variant != self.variant:
+            self.variant = variant
+            self._create_image()
 
     def _create_image(self):
         # Готовый спрайт по варианту; при ошибке — процедурный fallback

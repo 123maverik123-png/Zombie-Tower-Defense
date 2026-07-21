@@ -18,12 +18,7 @@ class PlayTowers:
 
         road_v (дорога идёт вертикально) → ворота 'h' поперёк; road_h → 'v'.
         Для поворотов смотрим, с какой стороны есть дорожные соседи.
-        Ручной оверрайд (колесо мыши) имеет приоритет над авто.
         """
-        override = getattr(self.state, 'gate_orientation_override', None)
-        if override in ('h', 'v'):
-            return override
-
         tm = self.state.tile_manager
         tile = tm.map_data[wy][wx]
         if tile == 'road_v':
@@ -169,6 +164,7 @@ class PlayTowers:
             
             gate = Gate(gate_x, gate_y, 500, self._gate_orientation(wx, wy), tile_size)
             state.gates.append(gate)
+            self._reorient_walls()  # стены рядом с воротами могут стать угловыми
             
             state.audio.play_sound("tower_build")
             state.feedback_logic.show_success(gate_x, gate_y)
@@ -192,14 +188,67 @@ class PlayTowers:
             wall_x = wx * tile_size + tile_size // 2
             wall_y = wy * tile_size + tile_size // 2
             
-            wall = Wall(wall_x, wall_y, 200, getattr(state, 'selected_wall_variant', 'h'), tile_size)
+            wall = Wall(wall_x, wall_y, 200, 'h', tile_size)
             state.walls.append(wall)
-            
+            self._reorient_walls()
+
             state.audio.play_sound("tower_build")
             state.feedback_logic.show_success(wall_x, wall_y)
             return True
-        
+
         return False
+
+    def _reorient_walls(self):
+        """Пересчитывает форму каждой стены по соседям (стены/ворота).
+
+        Прямая (h/v) — если соседи на одной оси; угловая (tl/tr/bl/br) —
+        если соседи на смежных осях (стена соединяет вертикальную линию с
+        горизонтальной, напр. двое ворот на разной высоте). Без подходящих
+        соседей — по оси, вдоль которой стоит одиночная стена, иначе 'h'.
+        """
+        state = self.state
+        # Множество занятых клеток: стены и ворота
+        occ = {}
+        for w in state.walls:
+            if w.alive:
+                occ[(w.wx, w.wy)] = w
+        gate_cells = set()
+        for g in state.gates:
+            if g.alive:
+                gate_cells.add((g.wx, g.wy))
+
+        def has_neighbor(cx, cy):
+            return (cx, cy) in occ or (cx, cy) in gate_cells
+
+        for w in state.walls:
+            if not w.alive:
+                continue
+            up = has_neighbor(w.wx, w.wy - 1)
+            down = has_neighbor(w.wx, w.wy + 1)
+            left = has_neighbor(w.wx - 1, w.wy)
+            right = has_neighbor(w.wx + 1, w.wy)
+
+            vert = up or down
+            horiz = left or right
+
+            if vert and horiz:
+                # Угол: соединяет вертикальное плечо с горизонтальным.
+                # tl соединяет ВЛЕВО и ВВЕРХ, tr — ВПРАВО+ВВЕРХ, и т.д.
+                if up and left:
+                    variant = 'tl'
+                elif up and right:
+                    variant = 'tr'
+                elif down and left:
+                    variant = 'bl'
+                else:
+                    variant = 'br'
+            elif vert:
+                variant = 'v'
+            elif horiz:
+                variant = 'h'
+            else:
+                variant = 'h'  # одиночная — горизонтальная по умолчанию
+            w.set_variant(variant)
     
     def upgrade_tower(self, tower):
         state = self.state
@@ -234,10 +283,14 @@ class PlayTowers:
         state.player.gold += sell_price
 
         # Убираем из нужного списка: башни / стены / ворота
+        removed_fort = False
         for lst in (state.towers, state.walls, state.gates):
             if tower in lst:
                 lst.remove(tower)
+                removed_fort = lst is not state.towers
                 break
+        if removed_fort:
+            self._reorient_walls()  # соседи пересчитывают форму
 
         state.tower_ui.hide()
         state.audio.play_sound("button_click")

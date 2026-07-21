@@ -92,22 +92,15 @@ class InputEvents:
         state.audio.play_sound("button_click", volume_override=0.3)
 
     def _handle_mouse_wheel(self, event):
-        """Колесо в режиме строительства: крутит форму стены / ориентацию ворот."""
+        """Колесо в режиме строительства стены: крутит форму стены."""
         state = self.state
-        if not state.wall_placement_mode:
+        if not state.wall_placement_mode or state.selected_wall_type != 'wall':
             return
         step = 1 if event.y > 0 else -1
-        if state.selected_wall_type == 'wall':
-            from entities.wall import WALL_VARIANTS
-            cur = getattr(state, 'selected_wall_variant', 'h')
-            idx = WALL_VARIANTS.index(cur) if cur in WALL_VARIANTS else 0
-            state.selected_wall_variant = WALL_VARIANTS[(idx + step) % len(WALL_VARIANTS)]
-        else:  # gate — ручной оверрайд авто-ориентации
-            cur = getattr(state, 'gate_orientation_override', None)
-            # None(авто) -> h -> v -> None по кругу
-            cycle = [None, 'h', 'v']
-            idx = cycle.index(cur) if cur in cycle else 0
-            state.gate_orientation_override = cycle[(idx + step) % len(cycle)]
+        from entities.wall import WALL_VARIANTS
+        cur = getattr(state, 'selected_wall_variant', 'h')
+        idx = WALL_VARIANTS.index(cur) if cur in WALL_VARIANTS else 0
+        state.selected_wall_variant = WALL_VARIANTS[(idx + step) % len(WALL_VARIANTS)]
         state.audio.play_sound("button_click", volume_override=0.3)
     
     def _select_tower_by_index(self, index):
