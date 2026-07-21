@@ -2,10 +2,12 @@
 """Менеджер волн - управляет процессом спавна"""
 
 import random
-from typing import List, Dict, Any, Optional, Tuple
-from entities.enemy import Enemy
+from typing import List, Dict, Any, Optional, Tuple, TYPE_CHECKING
 from entities.enemy_factory import EnemyFactory
 from core.event_bus import EventBus
+
+if TYPE_CHECKING:
+    from entities.enemy import Enemy
 
 
 class WaveManager:
@@ -85,7 +87,7 @@ class WaveManager:
         
         return True
     
-    def update(self, dt: float) -> Optional[Enemy]:
+    def update(self, dt: float) -> Optional["Enemy"]:
         if self.wave_complete or self.all_waves_complete:
             return None
         
@@ -179,7 +181,7 @@ class WaveManager:
         
         return {'id': selected_id, **base_config}
     
-    def _create_enemy(self, config: Dict[str, Any]) -> Enemy:
+    def _create_enemy(self, config: Dict[str, Any]) -> "Enemy":
         config = config.copy()
 
         # Рост HP по уровням: единственный источник сложности после капа

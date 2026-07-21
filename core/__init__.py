@@ -1,15 +1,6 @@
 # core/__init__.py
-from .event_bus import EventBus
-from .state_manager import StateManager, State
-from .settings import GameSettings
-from .audio import AudioManager
-from .tile_manager import TileManager
-from .level_generator import LevelGenerator, LevelData
-from .states import (
-    MenuState,
-    PlayState,
-    PauseState,
-    GameOverState,
-    SettingsState,
-    LevelSelectState
-)
+# Пустой намеренно: подмодули импортируются напрямую (from core.states import ...,
+# from core.event_bus import EventBus). Раньше здесь были агрегирующие импорты
+# всех состояний игры — из-за них любой `from core.X import ...` протягивал
+# core.states -> systems.wave -> entities.enemy и создавал циклический импорт.
+# Никто не использует `from core import ...`, поэтому агрегирование убрано.
