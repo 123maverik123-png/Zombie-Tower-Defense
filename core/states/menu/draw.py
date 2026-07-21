@@ -156,5 +156,5 @@ class MenuDraw:
             screen.blit(sub_surf, (text_x, rect.y + 18 + title_surf.get_height() + 6))
 
     def _draw_version(self, screen, screen_w, screen_h):
-        version = pygame.font.Font(None, 20).render("v1.5.0", True, (140, 130, 110))
+        version = pygame.font.Font(None, 20).render("v1.5.1", True, (140, 130, 110))
         screen.blit(version, (screen_w - 90, screen_h - 30))
