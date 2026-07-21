@@ -34,8 +34,20 @@ LORE_SLIDES = [
         "Пока в глубине не проснулся разлом...",
     ],
     [
+        "Древняя печать треснула.",
+        "Из мёртвых земель потянуло холодом и тлением.",
+    ],
+    [
         "Портал разорвал ткань земель.",
         "Из тьмы хлынули те, кто не знает смерти.",
+    ],
+    [
+        "Орда идёт лишь к одному —",
+        "поглотить свет Кристалла и погасить его навсегда.",
+    ],
+    [
+        "Стены пали. Армии рассеяны.",
+        "Остался лишь ты и путь, что ведёт к Сердцу.",
     ],
     [
         "Ты — последний хранитель.",
@@ -58,11 +70,11 @@ class IntroTimeline:
     также после последнего слайда — общий чёрный фейд (intro_fade).
     """
 
-    FADE_IN = 0.8    # проявление текста слайда
-    FADE_OUT = 0.7   # затухание текста слайда
-    BLACK_FADE = 0.6  # общий чёрный фейд в начале и в конце
+    FADE_IN = 1.6    # проявление текста слайда
+    FADE_OUT = 1.4   # затухание текста слайда
+    BLACK_FADE = 1.2  # общий чёрный фейд в начале и в конце
 
-    def __init__(self, slide_count, hold=2.6):
+    def __init__(self, slide_count, hold=5.2):
         self.slide_count = max(0, slide_count)
         # Длительность каждого слайда целиком (fade-in + hold + fade-out).
         self.slide_dur = self.FADE_IN + hold + self.FADE_OUT
@@ -169,7 +181,7 @@ class IntroState(State):
         self.hint_font = load_ui_font(18)
 
         slide_count = len(LORE_SLIDES) if mode == 'long' else 1
-        hold = 2.6 if mode == 'long' else 1.6
+        hold = 5.2 if mode == 'long' else 3.2
         self.timeline = IntroTimeline(slide_count, hold=hold)
 
         self._done_fired = False
