@@ -158,7 +158,7 @@ class ProfileSelectState(State):
             self.profile_manager.load_profile(profile.name)
             self.audio.play_sound("button_click")
 
-            from .menu_state import MenuState
+            from .menu.state import MenuState
             new_menu = MenuState(self.game, profile_manager=self.profile_manager, skip_check=True)
             self.game.state_manager.add_state('MENU', new_menu)
             self.game.state_manager.change_state('MENU')

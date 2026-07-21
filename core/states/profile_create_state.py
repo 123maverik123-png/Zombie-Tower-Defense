@@ -130,7 +130,7 @@ class ProfileCreateState(State):
                 self.game.state_manager.change_state('PROFILE_SELECT')
             else:
                 self.profile_manager.load_profile(name)
-                from .menu_state import MenuState
+                from .menu.state import MenuState
                 new_menu = MenuState(self.game, profile_manager=self.profile_manager, skip_check=False)
                 self.game.state_manager.add_state('MENU', new_menu)
                 self.game.state_manager.change_state('MENU')
