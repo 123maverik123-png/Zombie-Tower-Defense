@@ -39,6 +39,13 @@ class EnemyEffects:
         self.acid_interval = 0.5
         self.acid_timer = 0.0
         self.acid_duration = 0.0
+
+        # Кислота на полу (от лужи): отдельный DoT, сосуществует с acid
+        self.acid_ground_active = False
+        self.acid_ground_damage = 0
+        self.acid_ground_interval = 0.5
+        self.acid_ground_timer = 0.0
+        self.acid_ground_duration = 0.0
     
     def update(self, dt: float):
         enemy = self.enemy
@@ -48,6 +55,7 @@ class EnemyEffects:
         self._update_water(dt)
         self._update_freeze(dt)
         self._update_acid(dt)
+        self._update_acid_ground(dt)
         
         if self.slow_timer > 0:
             self.slow_timer -= dt
@@ -119,6 +127,22 @@ class EnemyEffects:
                     enemy.on_death()
             if self.acid_duration <= 0:
                 self.acid_effect_active = False
+
+    def _update_acid_ground(self, dt: float):
+        """DoT от кислотной лужи на полу. Тикает независимо от acid-эффекта."""
+        if self.acid_ground_active:
+            self.acid_ground_timer += dt
+            self.acid_ground_duration -= dt
+            if self.acid_ground_timer >= self.acid_ground_interval:
+                self.acid_ground_timer = 0
+                enemy = self.enemy
+                enemy.health -= self.acid_ground_damage
+                if enemy.health <= 0:
+                    enemy.health = 0
+                    enemy.alive = False
+                    enemy.on_death()
+            if self.acid_ground_duration <= 0:
+                self.acid_ground_active = False
     
     def apply_slow(self, multiplier: float, duration: float):
         if self.enemy.is_flying:
@@ -178,3 +202,13 @@ class EnemyEffects:
         self.acid_interval = interval
         self.acid_timer = 0.0
         self.acid_duration = duration
+
+    def apply_acid_ground_effect(self, damage: int, interval: float, duration: float):
+        """Эффект кислоты на полу (от лужи). Освежается при повторном наступании."""
+        if self.enemy.is_flying:
+            return
+        self.acid_ground_active = True
+        self.acid_ground_damage = damage
+        self.acid_ground_interval = interval
+        self.acid_ground_timer = 0.0
+        self.acid_ground_duration = max(self.acid_ground_duration, duration)

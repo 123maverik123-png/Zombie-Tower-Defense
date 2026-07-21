@@ -23,4 +23,9 @@ class TerrainDraw:
             if -100 < decal.x + ox < screen_w + 100 and -100 < decal.y + oy < screen_h + 100:
                 decal.draw_batch(renderer, ox, oy)
 
+        # 2.5 Кислотные лужи на земле (под сущностями)
+        for pool in getattr(state, 'acid_pools', []):
+            if -100 < pool.x + ox < screen_w + 100 and -100 < pool.y + oy < screen_h + 100:
+                pool.draw_batch(renderer, ox, oy)
+
         # Ворота и стены рисуются в EntitiesDraw (y-сортировка с врагами)

@@ -132,6 +132,9 @@ class Enemy(Entity):
     def apply_acid_effect(self, damage: int, interval: float, duration: float):
         self.effects.apply_acid_effect(damage, interval, duration)
 
+    def apply_acid_ground_effect(self, damage: int, interval: float, duration: float):
+        self.effects.apply_acid_ground_effect(damage, interval, duration)
+
     def apply_electric_effect(self, duration: float = 1.0):
         self.effects.apply_electric_effect(duration)
 

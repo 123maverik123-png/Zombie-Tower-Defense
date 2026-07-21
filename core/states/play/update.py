@@ -48,6 +48,7 @@ class PlayUpdate:
         self._update_waves(dt)
         self._update_towers(dt)
         self._update_projectiles(dt)
+        self._update_acid_pools(dt)
         self._update_lightning_effects(dt)
 
         # Очистка мертвых врагов
@@ -145,6 +146,19 @@ class PlayUpdate:
             proj.update(dt)
             if not proj.alive:
                 state.projectiles.remove(proj)
+
+    # ===== КИСЛОТНЫЕ ЛУЖИ =====
+    def _update_acid_pools(self, dt):
+        state = self.state
+        pools = getattr(state, 'acid_pools', None)
+        if not pools:
+            return
+        enemies = [e for e in state.enemies if e.alive]
+        for pool in pools[:]:
+            pool.update(dt)
+            pool.affect(enemies, dt)
+            if not pool.alive:
+                pools.remove(pool)
 
     # ===== МОЛНИИ =====
     def _update_lightning_effects(self, dt):

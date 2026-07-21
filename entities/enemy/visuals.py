@@ -248,6 +248,15 @@ class EnemyVisuals:
         if enemy.effects.acid_effect_active:
             batch.draw(soft, cx, cy, 44, 44, color=(50, 255, 50, 90), blend=BLEND_ADDITIVE)
 
+        if enemy.effects.acid_ground_active:
+            # Кислота на полу — едкое зелёное свечение у ног + капли
+            batch.draw(soft, cx, cy, 36, 36, color=(120, 255, 60, 70), blend=BLEND_ADDITIVE)
+            for i in range(3):
+                a = pygame.time.get_ticks() / 300 + i * 2.094
+                px = cx + math.cos(a) * 10
+                py = cy + math.sin(a) * 5
+                batch.draw(dot, px, py, 4, 4, color=(150, 255, 90, 120))
+
         if enemy.effects.electric_effect_active and not enemy.is_flying:
             batch.draw(soft, cx, cy, 30, 30, color=(100, 200, 255, 90), blend=BLEND_ADDITIVE)
             for spark in enemy.effects.electric_sparks:

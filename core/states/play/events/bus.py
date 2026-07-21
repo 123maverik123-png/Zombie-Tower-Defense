@@ -18,6 +18,8 @@ class BusEvents:
         EventBus.subscribe('wave_complete', self._on_wave_complete)
         EventBus.subscribe('tower_shot', self._on_tower_shot)
         EventBus.subscribe('aoe_damage_request', self._on_aoe_damage)
+        EventBus.subscribe('acid_splash_request', self._on_acid_splash)
+        EventBus.subscribe('acid_pool_request', self._on_acid_pool)
         EventBus.subscribe('enemy_dodged', self._on_enemy_dodged)
         EventBus.subscribe('tower_upgraded', self._on_tower_upgraded)
         EventBus.subscribe('lightning_effect', self._on_lightning_effect)
@@ -173,7 +175,7 @@ class BusEvents:
         radius = data['radius']
         damage = data['damage']
         damage_type = data.get('damage_type', 'physical')
-        
+
         for enemy in state.enemies:
             if not enemy.alive:
                 continue
@@ -181,12 +183,39 @@ class BusEvents:
             if dist <= radius:
                 enemy.take_damage(damage, damage_type)
                 state.effects_logic.add_hit_effect(enemy, 'rocket')
-        
-        # ✅ ЗАКОММЕНТИРОВАНЫ ДЕКАЛИ ВЗРЫВА
-        # state.decals_logic.add_explosion_decal(center_x, center_y)
+
         state.effects_logic.add_explosion_effect(center_x, center_y)
         state.audio.play_sound("rocket_hit", volume_override=0.4)
-    
+
+    def _on_acid_splash(self, data):
+        """AoE кислотного снаряда: урон + эффект кислоты вокруг точки попадания."""
+        state = self.state
+        center_x, center_y = data['center']
+        radius = data['radius']
+        damage = data['damage']
+        acid_damage = data['acid_damage']
+        acid_interval = data['acid_interval']
+        acid_duration = data['acid_duration']
+        exclude = data.get('exclude')
+
+        for enemy in state.enemies:
+            if not enemy.alive or enemy is exclude:
+                continue
+            dist = math.hypot(enemy.x - center_x, enemy.y - center_y)
+            if dist <= radius:
+                enemy.take_damage(damage, 'acid')
+                if hasattr(enemy, 'apply_acid_effect'):
+                    enemy.apply_acid_effect(acid_damage, acid_interval, acid_duration)
+
+    def _on_acid_pool(self, data):
+        """Создаёт лужу кислоты на месте попадания снаряда."""
+        from entities.acid_pool import AcidPool
+        state = self.state
+        x, y = data['pos']
+        pool = AcidPool(x, y, data['ground_damage'],
+                        data['interval'], data['duration'])
+        state.acid_pools.append(pool)
+
     def _on_lightning_effect(self, data):
         state = self.state
         from_pos = data['from']

@@ -262,35 +262,36 @@
     "name": "Кислотная",
     "cost": 140,
     "damage": 8,
-    "fire_rate": 0.8,
+    "fire_rate": 1.6,
     "range_cells": 3.5,
     "upgrade_cost": 210,
     "damage_type": "acid",
-    "projectile_speed": 400,
-    "width": 64,
-    "height": 64,
-    "target_type": "ground",
+    "projectile_speed": 320,
+    "aoe_radius_cells": 1.2,
     "acid_damage": 5,
     "acid_interval": 0.5,
     "acid_duration": 6.0,
+    "width": 64,
+    "height": 64,
+    "target_type": "ground",
     "upgrade_stats": {
       "level_2": {
-        "damage_mult": 1.2,
-        "acid_damage": 7,
+        "damage_mult": 1.15,
         "range_cells": 4,
+        "aoe_radius_cells": 1.4,
         "acid_duration": 7.0
       },
       "level_3": {
-        "damage_mult": 1.4,
-        "acid_damage": 9,
+        "damage_mult": 1.15,
         "range_cells": 4.5,
+        "aoe_radius_cells": 1.6,
         "acid_duration": 8.0
       },
       "level_4": {
-        "damage_mult": 1.6,
-        "acid_damage": 12,
+        "damage_mult": 1.15,
         "range_cells": 5,
-        "acid_duration": 10.0,
+        "aoe_radius_cells": 1.8,
+        "acid_duration": 9.0,
         "special": "acid_splash"
       }
     }

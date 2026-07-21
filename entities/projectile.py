@@ -43,6 +43,11 @@ class Projectile(Entity):
         self.effect_duration = config.get('effect_duration', 0)
         self.slow_duration = config.get('slow_duration', 0)
         self.slow_multiplier = config.get('slow_multiplier', 0.5)
+
+        # Кислота: параметры DoT-эффекта и лужи
+        self.acid_damage = config.get('acid_damage', 0)
+        self.acid_interval = config.get('acid_interval', 0.5)
+        self.acid_duration = config.get('acid_duration', 0)
         
         # Цепной урон
         self.chain_count = config.get('chain_count', 0)
@@ -86,6 +91,15 @@ class Projectile(Entity):
             pygame.draw.circle(surf, (255, 50, 0), (size//2, size//2), size//2)
             pygame.draw.circle(surf, (255, 150, 50), (size//2, size//2), size//3)
             pygame.draw.circle(surf, (255, 255, 200), (size//2, size//2), size//5)
+            self.width = size
+            self.height = size
+
+        elif self.projectile_type == 'acid':
+            size = 16
+            surf = pygame.Surface((size, size), pygame.SRCALPHA)
+            pygame.draw.circle(surf, (40, 140, 30), (size//2, size//2), size//2)
+            pygame.draw.circle(surf, (90, 220, 60), (size//2, size//2), size//2 - 2)
+            pygame.draw.circle(surf, (170, 255, 120), (size//2 - 2, size//2 - 2), size//5)
             self.width = size
             self.height = size
         
@@ -143,7 +157,7 @@ class Projectile(Entity):
         dy = target_center[1] - self.y
         distance = math.hypot(dx, dy)
         
-        if self.projectile_type == 'flamethrower':
+        if self.projectile_type in ('flamethrower', 'acid'):
             self._update_trail()
         
         if distance < 5:
@@ -202,6 +216,12 @@ class Projectile(Entity):
                 self.target.apply_electric_effect(self.slow_duration or 1.0)
             self.alive = False
             return
+
+        # Кислотная: урон + AoE + эффект кислоты + лужа на полу
+        if self.projectile_type == 'acid':
+            self._hit_acid()
+            self.alive = False
+            return
         
         # Обычный урон
         actual_damage = self.target.take_damage(self.damage, self.damage_type)
@@ -223,6 +243,35 @@ class Projectile(Entity):
             'radius': self.aoe_radius,
             'damage': self.damage * 0.5,
             'damage_type': self.damage_type
+        })
+
+    def _hit_acid(self):
+        """Попадание кислотного снаряда: прямой урон + AoE + эффект кислоты,
+        затем на месте остаётся лужа (через событие acid_pool_request)."""
+        from core.event_bus import EventBus
+
+        # Прямой урон и эффект кислоты по цели (поверх текущего эффекта)
+        self.target.take_damage(self.damage, self.damage_type)
+        if hasattr(self.target, 'apply_acid_effect'):
+            self.target.apply_acid_effect(self.acid_damage, self.acid_interval, self.acid_duration)
+
+        # AoE-урон + эффект кислоты вокруг точки попадания
+        EventBus.emit('acid_splash_request', {
+            'center': self.get_center(),
+            'radius': self.aoe_radius,
+            'damage': self.damage * 0.5,
+            'acid_damage': self.acid_damage,
+            'acid_interval': self.acid_interval,
+            'acid_duration': self.acid_duration,
+            'exclude': self.target,
+        })
+
+        # Лужа на полу: наступивший получает вдвое меньший урон исходного попадания
+        EventBus.emit('acid_pool_request', {
+            'pos': self.get_center(),
+            'ground_damage': max(1, self.acid_damage // 2),
+            'interval': self.acid_interval,
+            'duration': self.acid_duration,
         })
     
     def _chain_lightning(self):
@@ -321,6 +370,16 @@ class Projectile(Entity):
                 batch.draw_line(x1 + offset_x, y1 + offset_y,
                                 x2 + offset_x, y2 + offset_y,
                                 3, (255, 150, 50, alpha), blend=BLEND_ADDITIVE)
+
+        if self.projectile_type == 'acid' and len(self.trail) > 1:
+            soft = renderer.get_region('__soft__')
+            for i in range(len(self.trail) - 1):
+                t = i / len(self.trail)
+                alpha = int(180 * t)
+                x1, y1 = self.trail[i]
+                size = int(4 + 6 * t)
+                batch.draw(soft, x1 + offset_x, y1 + offset_y, size, size,
+                           color=(90, 220, 60, alpha), blend=BLEND_ADDITIVE)
 
         if self.projectile_type == 'electric':
             dot = renderer.get_region('__dot__')
