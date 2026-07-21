@@ -89,6 +89,7 @@ class PlayState(State):
         self.wave_manager = None
         
         self.console = None
+        self.balance_editor = None
         self.tower_ui = None
         
         self.font = None

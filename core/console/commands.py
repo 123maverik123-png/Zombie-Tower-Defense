@@ -29,6 +29,22 @@ class ConsoleCommands:
         self._add_output("  unlock_all    - Unlock all towers and walls")
         self._add_output("  unlock_levels - Unlock all 50 levels")
         self._add_output("  set_level <n> - Set current level number (unlock previous)")
+        self._add_output("  balance       - Open balance editor (dev)")
+
+    def _cmd_balance(self, args=None):
+        """Открывает панель редактора баланса (dev-инструмент)."""
+        play = self._get_play_state()
+        if not play:
+            self._add_output("Not in game!")
+            return
+        editor = getattr(play, 'balance_editor', None)
+        if editor is None:
+            self._add_output("Balance editor not available")
+            return
+        editor.toggle()
+        # Закрываем консоль, чтобы она не перехватывала ввод панели
+        self.active = False
+        self._add_output("Balance editor: " + ("ON" if editor.active else "OFF"))
 
     def _cmd_unlock_all(self, args=None):
         """Открывает все башни для текущего уровня"""

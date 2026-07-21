@@ -135,6 +135,10 @@ class PlayStateInitializer:
         
         # Консоль
         state.console = DevConsole(game)
+
+        # Редактор баланса (dev-инструмент, открывается командой `balance`)
+        from core.balance_editor import BalanceEditor
+        state.balance_editor = BalanceEditor(game)
         
         # UI
         state.tower_ui = TowerUI()

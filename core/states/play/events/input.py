@@ -24,7 +24,12 @@ class InputEvents:
             
             if state.console.active:
                 continue
-            
+
+            # === РЕДАКТОР БАЛАНСА (dev) ===
+            if getattr(state, 'balance_editor', None) and state.balance_editor.active:
+                state.balance_editor.handle_event(event)
+                continue
+
             # === КЛАВИАТУРА ===
             if event.type == pygame.KEYDOWN:
                 self._handle_key(event.key)

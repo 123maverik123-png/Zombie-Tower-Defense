@@ -27,6 +27,10 @@ class UIDraw:
         
         # 4. Консоль
         state.console.draw(screen)
+
+        # 5. Редактор баланса (dev)
+        if getattr(state, 'balance_editor', None):
+            state.balance_editor.draw(screen)
     
     def _draw_wave_info(self, screen):
         """Рисует информацию о волнах"""

@@ -23,6 +23,10 @@ deepseek_*.py
 .ses
 rtk.exe
 
+# Бэкапы редактора баланса и оверрайды (локальные)
+*.json.bak
+data/configs/waves_override.json
+
 # IDE
 .vscode/
 .idea/

@@ -36,6 +36,7 @@ class DevConsole(ConsoleCommands):
             'unlock_all': self._cmd_unlock_all,
             'unlock_levels': self._cmd_unlock_levels,
             'set_level': self._cmd_set_level,
+            'balance': self._cmd_balance,
         }
 
         self._cmd_help()
