@@ -2,11 +2,15 @@
 import pygame
 import random
 from entities.base import Entity
+from services.resource_loader import ResourceLoader
+
+WALL_VARIANTS = ('h', 'v', 'tl', 'tr', 'bl', 'br')
+
 
 class Wall(Entity):
     """Обычная стена — блокирует путь, может быть атакована зомби."""
 
-    def __init__(self, x: float, y: float, hp: int = 200):
+    def __init__(self, x: float, y: float, hp: int = 200, variant: str = 'h'):
         super().__init__(
             entity_id='wall',
             x=x,
@@ -20,10 +24,23 @@ class Wall(Entity):
         self.height = 40
         self.rect = pygame.Rect(x - self.width//2, y - self.height//2, self.width, self.height)
         self.is_gate = False
+        self.variant = variant if variant in WALL_VARIANTS else 'h'
 
         self._create_image()
 
     def _create_image(self):
+        # Готовый спрайт по варианту; при ошибке — процедурный fallback
+        try:
+            loader = ResourceLoader()
+            self.image = loader.load_image(
+                f"fortify/wall_{self.variant}.png",
+                scale=(self.width, self.height))
+            return
+        except Exception:
+            pass
+        self._create_image_fallback()
+
+    def _create_image_fallback(self):
         self.image = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         # Каменная стена
         pygame.draw.rect(self.image, (140, 130, 120), (0, 0, self.width, self.height))
@@ -72,7 +89,7 @@ class Wall(Entity):
         cx = self.x + offset_x
         cy = self.y + offset_y
 
-        name = f"wall_{int(self.x)}_{int(self.y)}"
+        name = f"wall_{self.variant}_{int(self.x)}_{int(self.y)}"
         if not renderer.has_texture(name):
             renderer.load_texture(name, self.image)
         batch.draw(renderer.get_region(name), cx, cy, self.width, self.height)

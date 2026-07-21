@@ -2,11 +2,12 @@
 import pygame
 import random
 from entities.base import Entity
+from services.resource_loader import ResourceLoader
 
 class Gate(Entity):
     """Ворота — блокируют путь, не ближе 10 клеток к порталу."""
 
-    def __init__(self, x: float, y: float, hp: int = 500):
+    def __init__(self, x: float, y: float, hp: int = 500, orientation: str = 'h'):
         super().__init__(
             entity_id='gate',
             x=x,
@@ -20,10 +21,23 @@ class Gate(Entity):
         self.height = 50
         self.rect = pygame.Rect(x - self.width//2, y - self.height//2, self.width, self.height)
         self.is_gate = True
+        self.orientation = orientation if orientation in ('h', 'v') else 'h'
 
         self._create_image()
 
     def _create_image(self):
+        # Готовый спрайт по ориентации; при ошибке — процедурный fallback
+        try:
+            loader = ResourceLoader()
+            self.image = loader.load_image(
+                f"fortify/gate_{self.orientation}.png",
+                scale=(self.width, self.height))
+            return
+        except Exception:
+            pass
+        self._create_image_fallback()
+
+    def _create_image_fallback(self):
         self.image = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         # Деревянные ворота
         pygame.draw.rect(self.image, (120, 80, 40), (0, 0, self.width, self.height))
@@ -78,7 +92,7 @@ class Gate(Entity):
         cx = self.x + offset_x
         cy = self.y + offset_y
 
-        name = f"gate_{int(self.x)}_{int(self.y)}"
+        name = f"gate_{self.orientation}_{int(self.x)}_{int(self.y)}"
         if not renderer.has_texture(name):
             renderer.load_texture(name, self.image)
         batch.draw(renderer.get_region(name), cx, cy, self.width, self.height)

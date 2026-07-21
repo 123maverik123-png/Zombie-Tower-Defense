@@ -74,7 +74,11 @@ class HUD:
         mode_text = "BUILD" if state.building_mode else "PLAY"
         mode_color = SUCCESS if state.building_mode else PARCHMENT
         if state.wall_placement_mode:
-            mode_text = f"WALL: {state.selected_wall_type.upper()}"
+            if state.selected_wall_type == 'wall':
+                variant = getattr(state, 'selected_wall_variant', 'h').upper()
+                mode_text = f"WALL: {variant} [R]"
+            else:
+                mode_text = f"WALL: {state.selected_wall_type.upper()}"
             mode_color = GOLD_BRIGHT
         
         mode_surf = self.font.render(f"[{mode_text}]", True, mode_color)

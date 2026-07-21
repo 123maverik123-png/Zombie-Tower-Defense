@@ -77,21 +77,47 @@ class PreviewDraw:
         screen.blit(text, (cx - text.get_width()//2, cell_y - 30))
 
     def _draw_wall_preview(self, screen, state, wx, wy, cell_x, cell_y, tile_size):
-        """Подсветка клетки для ворот/стены — без зоны поражения"""
+        """Подсветка клетки + полупрозрачный спрайт выбранного укрепления."""
         tile = state.tile_manager.map_data[wy][wx]
 
         if state.selected_wall_type == 'gate':
             can_build = tile.startswith('road_')
             name, cost = 'GATE', 150
+            orientation = state.towers_logic._gate_orientation(wx, wy)
+            sprite_name = f"gate_{orientation}"
         else:
             can_build = tile == 'grass'
-            name, cost = 'WALL', 80
+            variant = getattr(state, 'selected_wall_variant', 'h')
+            name, cost = f"WALL:{variant.upper()}", 80
+            sprite_name = f"wall_{variant}"
 
         if can_build and self._cell_occupied(state, wx, wy):
             can_build = False
 
         self._draw_cell_highlight(screen, cell_x, cell_y, tile_size, can_build)
 
+        # Полупрозрачный спрайт выбранного укрепления в клетке
+        self._blit_ghost(screen, sprite_name, cell_x, cell_y, tile_size)
+
         cx = cell_x + tile_size // 2
         text = state.small_font.render(f"{name} (${cost})", True, (255, 255, 255))
         screen.blit(text, (cx - text.get_width()//2, cell_y - 30))
+
+    _ghost_cache = {}
+
+    def _blit_ghost(self, screen, sprite_name, cell_x, cell_y, tile_size):
+        """Рисует полупрозрачный спрайт укрепления по центру клетки."""
+        img = self._ghost_cache.get((sprite_name, tile_size))
+        if img is None:
+            try:
+                from services.resource_loader import ResourceLoader
+                base = ResourceLoader().load_image(f"fortify/{sprite_name}.png")
+                size = int(tile_size * 0.78)
+                img = pygame.transform.scale(base, (size, size)).convert_alpha()
+                img.set_alpha(150)
+                self._ghost_cache[(sprite_name, tile_size)] = img
+            except Exception:
+                return
+        gx = cell_x + (tile_size - img.get_width()) // 2
+        gy = cell_y + (tile_size - img.get_height()) // 2
+        screen.blit(img, (gx, gy))

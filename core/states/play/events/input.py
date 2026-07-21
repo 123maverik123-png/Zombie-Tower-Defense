@@ -73,6 +73,20 @@ class InputEvents:
         
         elif key == pygame.K_g:
             self._toggle_wall_mode()
+
+        elif key == pygame.K_r:
+            self._cycle_wall_variant()
+
+    def _cycle_wall_variant(self):
+        """Переключает форму стены по кругу (только для типа 'wall')."""
+        state = self.state
+        if not state.wall_placement_mode or state.selected_wall_type != 'wall':
+            return
+        from entities.wall import WALL_VARIANTS
+        cur = getattr(state, 'selected_wall_variant', 'h')
+        idx = (WALL_VARIANTS.index(cur) + 1) % len(WALL_VARIANTS) if cur in WALL_VARIANTS else 0
+        state.selected_wall_variant = WALL_VARIANTS[idx]
+        state.audio.play_sound("button_click", volume_override=0.3)
     
     def _select_tower_by_index(self, index):
         state = self.state

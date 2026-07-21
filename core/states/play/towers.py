@@ -11,6 +11,31 @@ from core.event_bus import EventBus
 class PlayTowers:
     def __init__(self, state):
         self.state = state
+
+    def _gate_orientation(self, wx, wy):
+        """Ориентация ворот по дороге: 'h' — створки горизонтальны (перекрывают
+        вертикальный проход), 'v' — вертикальны (перекрывают горизонтальный).
+
+        road_v (дорога идёт вертикально) → ворота 'h' поперёк; road_h → 'v'.
+        Для поворотов смотрим, с какой стороны есть дорожные соседи.
+        """
+        tm = self.state.tile_manager
+        tile = tm.map_data[wy][wx]
+        if tile == 'road_v':
+            return 'h'
+        if tile == 'road_h':
+            return 'v'
+
+        # Поворот/перекрёсток: по направлению соседних дорожных клеток
+        def is_road(x, y):
+            if 0 <= x < tm.map_width and 0 <= y < tm.map_height:
+                return tm.map_data[y][x].startswith('road_')
+            return False
+
+        vert = is_road(wx, wy - 1) + is_road(wx, wy + 1)
+        horiz = is_road(wx - 1, wy) + is_road(wx + 1, wy)
+        # Больше вертикальных соседей → проход вертикальный → ворота 'h'
+        return 'h' if vert >= horiz else 'v'
     
     def _find_portal(self):
         state = self.state
@@ -137,7 +162,7 @@ class PlayTowers:
             gate_x = wx * tile_size + tile_size // 2
             gate_y = wy * tile_size + tile_size // 2
             
-            gate = Gate(gate_x, gate_y, 500)
+            gate = Gate(gate_x, gate_y, 500, self._gate_orientation(wx, wy))
             state.gates.append(gate)
             
             state.audio.play_sound("tower_build")
@@ -162,7 +187,7 @@ class PlayTowers:
             wall_x = wx * tile_size + tile_size // 2
             wall_y = wy * tile_size + tile_size // 2
             
-            wall = Wall(wall_x, wall_y, 200)
+            wall = Wall(wall_x, wall_y, 200, getattr(state, 'selected_wall_variant', 'h'))
             state.walls.append(wall)
             
             state.audio.play_sound("tower_build")
