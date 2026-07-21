@@ -190,13 +190,36 @@ class IntroState(State):
     # --- загрузка ассетов сцены (портал/кристалл/зомби/фон) --------------
     def _load_scene_assets(self):
         self.bg = self._try_load("assets/images/menu_bg.jpg", convert=True)
-        self.portal_img = self._try_load("assets/images/tiles/tile_portal.png")
-        self.castle_img = self._try_load("assets/images/tiles/tile_castle.png")
+        portal_path, castle_path = self._tile_paths()
+        self.portal_img = self._try_load(portal_path)
+        self.castle_img = self._try_load(castle_path)
         self.zombie_imgs = []
         for i in range(4):
             img = self._try_load(f"assets/sprites/pzombie_normal/right_{i}.png")
             if img:
                 self.zombie_imgs.append(img)
+
+    def _tile_paths(self):
+        """Пути к тем же тайлам портала/кристалла, что показываются в бою.
+
+        При теме 'kenney' тайлы лежат в подпапке биома (выбор по уровню);
+        корневые tile_*.png — старые classic-ассеты, фолбэк.
+        """
+        portal = "assets/images/tiles/tile_portal.png"
+        castle = "assets/images/tiles/tile_castle.png"
+        try:
+            from core.graphics_theme import THEME, biome_for_level
+            if THEME == 'kenney':
+                biome = biome_for_level(self.level)
+                bp = f"assets/images/tiles/{biome}/tile_portal.png"
+                bc = f"assets/images/tiles/{biome}/tile_castle.png"
+                if os.path.exists(bp):
+                    portal = bp
+                if os.path.exists(bc):
+                    castle = bc
+        except Exception:
+            pass
+        return portal, castle
 
     def _try_load(self, path, convert=False):
         if not os.path.exists(path):
