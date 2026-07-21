@@ -134,15 +134,17 @@ class EnemyVisuals:
         self._batch_effects_below(renderer, cx, cy)
 
         # Тень (у всех врагов; у летающих — на земле, далеко под мышью)
+        spawn_alpha = enemy.states.get_spawn_alpha()
         shadow = renderer.get_region('__shadow__')
         if shadow:
+            sa = spawn_alpha / 255.0
             if enemy.is_flying:
                 batch.draw(shadow, cx, cy + enemy.height // 2, 44, 14,
-                           color=(255, 255, 255, 45))
+                           color=(255, 255, 255, int(45 * sa)))
             else:
                 sw = enemy.width * 0.72
                 batch.draw(shadow, cx, cy + enemy.height * 0.06, sw, sw * 0.36,
-                           color=(255, 255, 255, 85))
+                           color=(255, 255, 255, int(85 * sa)))
 
         float_y = int(self.float_offset) if enemy.is_flying else 0
 
@@ -154,7 +156,11 @@ class EnemyVisuals:
             # Летит высоко над головами наземных
             draw_y -= h * 0.55
 
-        batch.draw(region, draw_x, draw_y, w, h, centered=False)
+        if spawn_alpha < 255:
+            batch.draw(region, draw_x, draw_y, w, h, centered=False,
+                       color=(255, 255, 255, spawn_alpha))
+        else:
+            batch.draw(region, draw_x, draw_y, w, h, centered=False)
 
         # Огонь ПОВЕРХ врага
         if enemy.effects.fire_effect_active and self._fire_frames:

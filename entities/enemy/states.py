@@ -1,8 +1,9 @@
 # entities/enemy/states.py
 
 class EnemyStates:
-    """Управление состояниями врага: alive → dying → corpse → fading → dead.
+    """Состояния врага: spawning → alive → dying → corpse → fading → dead.
 
+    spawning — проявляется из пустоты (альфа 0 → 255), стоит на месте
     dying  — падает на спину (поворот до 45°)
     corpse — лежит corpse_duration секунд
     fading — растворяется fade_duration секунд (альфа 255 → 0)
@@ -13,7 +14,9 @@ class EnemyStates:
 
     def __init__(self, enemy):
         self.enemy = enemy
-        self.state = 'alive'
+        self.state = 'spawning'
+        self.spawn_timer = 0.6
+        self.spawn_duration = 0.6
         self.death_timer = 0.0
         self.death_duration = 0.8
         self.corpse_timer = 0.0
@@ -31,6 +34,12 @@ class EnemyStates:
 
         if self.state == 'dead':
             return False
+
+        if self.state == 'spawning':
+            self.spawn_timer -= dt
+            if self.spawn_timer <= 0:
+                self.state = 'alive'
+            return False  # во время появления враг не двигается
 
         if self.state == 'fading':
             self.fade_timer -= dt
@@ -80,6 +89,15 @@ class EnemyStates:
         if self.state == 'fading':
             return max(0, int(255 * (self.fade_timer / self.fade_duration)))
         return 255
+
+    def get_spawn_alpha(self) -> int:
+        """Альфа при появлении: 0 → 255 за spawn_duration."""
+        if self.state == 'spawning':
+            return max(0, min(255, int(255 * (1.0 - self.spawn_timer / self.spawn_duration))))
+        return 255
+
+    def is_spawning(self) -> bool:
+        return self.state == 'spawning'
 
     def is_alive(self) -> bool:
         return self.state == 'alive'
