@@ -59,19 +59,9 @@ class PlayDecals:
             # state.decals.append(decal)
     
     def add_hit_decal(self, target, decal_type='blood_small', scale=0.3):
-        """Добавляет декаль попадания на цель (враг). Рисуется поверх врагов.
-
-        Для летающих точку попадания поднимаем вверх — спрайт мыши парит
-        над землёй, иначе декаль оказывается под ней у самой земли.
-        """
-        state = self.state
-        if not target:
-            return
-        y = target.y
-        if getattr(target, 'is_flying', False):
-            y -= target.height * 0.9
-        decal = Decal(target.x, y, decal_type, scale=scale)
-        state.hit_decals.append(decal)
+        """Устар.: раны теперь живут на враге (Enemy.add_wound)."""
+        if target and hasattr(target, 'add_wound'):
+            target.add_wound(decal_type, scale)
 
     def add_hit_decal_at(self, x, y, decal_type='blood_small', scale=0.3):
         """Добавляет декаль попадания в точке на земле (для снарядов/луж)."""
@@ -107,12 +97,6 @@ class PlayDecals:
             decal.update(dt)
             if not decal.alive:
                 state.decals.remove(decal)
-
-        # Декали попаданий (рисуются поверх врагов)
-        for decal in state.hit_decals[:]:
-            decal.update(dt)
-            if not decal.alive:
-                state.hit_decals.remove(decal)
         
         # Обновляем дульные вспышки
         for flash in self.muzzle_flashes[:]:

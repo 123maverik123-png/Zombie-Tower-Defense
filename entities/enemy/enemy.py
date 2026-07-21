@@ -100,10 +100,15 @@ class Enemy(Entity):
         self.dy = 0
         self.image = self.visuals.get_current_frame()
 
+        # Раны на теле — декали попаданий, живут на враге и исчезают с ним.
+        # Каждая: {'decal': Decal, 'fx': доля ширины, 'fy': доля высоты}
+        self.wounds = []
+
     def take_damage(self, amount: int, damage_type: str = 'physical') -> int:
         return self.combat.take_damage(amount, damage_type)
 
     def update(self, dt: float):
+        self._update_wounds(dt)
         if not self.states.update(dt):
             return
 
@@ -113,6 +118,44 @@ class Enemy(Entity):
         if self.movement.move_distance > 0:
             self.animation_frame += dt * 8
         self.image = self.visuals.get_current_frame()
+
+    def add_wound(self, decal_type='blood_small', scale=0.3):
+        """Добавляет рану на тело — декаль в случайной точке от ног до головы.
+
+        Рана живёт на враге (двигается с ним) и исчезает вместе с ним.
+        Точка фиксируется как доля размера спрайта, чтобы держаться на теле.
+        """
+        import random
+        from entities.decals import Decal
+        # Точка на теле спрайта: 0 = центр по X; fy 0..1 = голова..ноги
+        fx = random.uniform(-0.28, 0.28)
+        fy = random.uniform(0.0, 1.0)
+        decal = Decal(self.x, self.y, decal_type, scale=scale)
+        # Рана не исчезает по своему таймеру — живёт пока жив враг
+        decal.lifetime = float('inf')
+        decal.max_lifetime = float('inf')
+        decal.fade = False
+        self.wounds.append({'decal': decal, 'fx': fx, 'fy': fy})
+
+    def _update_wounds(self, dt: float):
+        """Позиционирует раны на теле по текущим координатам врага.
+
+        Спрайт рисуется от (y - h/1.2) вверх, тело занимает по вертикали
+        примерно [y - 0.83h .. y + 0.17h]. Раскидываем раны от головы к ногам.
+        """
+        if not self.wounds:
+            return
+        head_y = self.y - self.height * 0.78
+        feet_y = self.y + self.height * 0.05
+        if self.is_flying:
+            # Летающий спрайт парит выше — раны смещаем вместе с ним
+            lift = self.height * 0.55 + self.visuals.float_offset
+            head_y -= lift
+            feet_y -= lift
+        for w in self.wounds:
+            w['decal'].x = self.x + w['fx'] * self.width
+            w['decal'].y = head_y + (feet_y - head_y) * w['fy']
+            w['decal'].update(dt)
 
     def on_reach_end(self):
         self.combat.on_reach_end()

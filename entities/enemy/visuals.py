@@ -162,6 +162,9 @@ class EnemyVisuals:
         else:
             batch.draw(region, draw_x, draw_y, w, h, centered=False)
 
+        # Раны на теле — поверх спрайта (с учётом альфы появления)
+        self._batch_wounds(renderer, offset_x, offset_y, spawn_alpha / 255.0)
+
         # Огонь ПОВЕРХ врага
         if enemy.effects.fire_effect_active and self._fire_frames:
             self._fire_frame_index += 0.08
@@ -193,6 +196,28 @@ class EnemyVisuals:
 
         self._batch_health_bar(renderer, cx, cy, float_y)
 
+    def _batch_wounds(self, renderer, offset_x, offset_y, alpha_scale=1.0):
+        """Рисует раны (декали попаданий) на теле врага поверх спрайта."""
+        enemy = self.enemy
+        wounds = getattr(enemy, 'wounds', None)
+        if not wounds:
+            return
+        for w in wounds:
+            decal = w['decal']
+            a = int(decal.current_alpha * alpha_scale)
+            if a <= 0:
+                continue
+            image = decal.image
+            if image is None or image.get_width() == 0:
+                continue
+            name = f"decal_{decal.type}_s{decal.size}_v{decal._atlas_variant}"
+            if not renderer.has_texture(name):
+                renderer.load_texture(name, image)
+            region = renderer.get_region(name)
+            renderer.batch.draw(region, decal.x + offset_x, decal.y + offset_y,
+                                region.w, region.h,
+                                color=(255, 255, 255, a))
+
     def _batch_dying(self, renderer, offset_x, offset_y):
         enemy = self.enemy
         region = self._frame_region(renderer)
@@ -200,6 +225,7 @@ class EnemyVisuals:
         cy = enemy.states.death_y + offset_y - enemy.height // 1.2 + enemy.height // 2 + enemy.states.fall_y_offset
         renderer.batch.draw(region, cx, cy, enemy.width, enemy.height,
                             rotation=-enemy.states.fall_angle)
+        self._batch_wounds(renderer, offset_x, offset_y)
 
     def _batch_dead(self, renderer, offset_x, offset_y):
         """Труп: лежит повёрнутым на 45°, при fading растворяется (альфа 255→0)."""
@@ -213,6 +239,8 @@ class EnemyVisuals:
         renderer.batch.draw(region, cx, cy, enemy.width, enemy.height,
                             rotation=-enemy.states.FALL_ANGLE,
                             color=(255, 255, 255, alpha))
+        # Раны гаснут вместе с трупом
+        self._batch_wounds(renderer, offset_x, offset_y, alpha / 255.0)
 
     def _batch_effects_below(self, renderer, cx, cy):
         from core.opengl.batch import BLEND_ADDITIVE
