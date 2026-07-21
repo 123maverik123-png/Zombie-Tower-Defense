@@ -1,8 +1,8 @@
 @echo off
 chcp 65001 > nul
-title Zombie Tower Defense - Build v1.5.2
+title Zombie Tower Defense - Build v1.5.3
 
-set VERSION=1.5.2
+set VERSION=1.5.3
 
 echo ============================================
 echo    🧟 ZOMBIE TOWER DEFENSE v%VERSION%

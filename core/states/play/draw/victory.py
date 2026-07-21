@@ -26,10 +26,10 @@ class VictoryDraw:
         state = self.state
         w, h = state.game.render_width, state.game.render_height
 
-        if not self._victory_sound_played:
-            self._victory_sound_played = True
-            if state.audio.settings.music_enabled:
-                state.audio.play_music("victory_theme.wav")
+        # Музыку на победе НЕ переключаем — game_theme продолжает играть
+        # непрерывно (бой → экран победы → следующий уровень) без рестарта.
+        # Джингл victory_theme отключён (заглушка).
+        self._victory_sound_played = True
 
         # Затемнение всего экрана
         dim = pygame.Surface((w, h), pygame.SRCALPHA)

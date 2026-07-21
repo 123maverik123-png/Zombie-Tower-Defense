@@ -6,7 +6,7 @@
 ![Pygame](https://img.shields.io/badge/Pygame-2.5-green)
 ![ModernGL](https://img.shields.io/badge/ModernGL-5.12-orange)
 ![OpenGL](https://img.shields.io/badge/OpenGL-3.3-red)
-![Version](https://img.shields.io/badge/version-1.5.2-brightgreen)
+![Version](https://img.shields.io/badge/version-1.5.3-brightgreen)
 
 ## 🎮 Об игре
 
