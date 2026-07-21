@@ -64,6 +64,14 @@ class MenuHandlers:
             state.game.state_manager.change_state('PROFILE_CREATE')
             return
 
+        # Сложность ещё не выбрана — показываем окно выбора (оно само
+        # сохранит выбор в профиль и запустит игру).
+        if profile.difficulty is None:
+            from ..difficulty_select_state import DifficultySelectState
+            state.game.state_manager.add_state('DIFFICULTY_SELECT', DifficultySelectState(state.game))
+            state.game.state_manager.change_state('DIFFICULTY_SELECT')
+            return
+
         level = profile.current_level
         level_data = build_level(level)
 

@@ -120,6 +120,12 @@ class PlayStateInitializer:
         state.wave_manager.enemy_configs = state.enemy_configs
         state.wave_manager.set_level(level_number)
         state.wave_manager.set_state(state)
+        # Сложность из профиля (medium=1.0, hard=1.4). Ставим ДО расчёта
+        # total_hp, т.к. он учитывает множитель.
+        from services.profile_manager import ProfileManager
+        _profile = ProfileManager().get_current_profile()
+        if _profile:
+            state.wave_manager.set_difficulty(_profile.difficulty_multiplier())
         state.wave_manager.calculate_total_hp(state.wave_data)
         state.wave_manager.start_next_wave()
         
