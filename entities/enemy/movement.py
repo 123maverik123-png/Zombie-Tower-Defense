@@ -1,14 +1,32 @@
 # entities/enemy/movement.py
 import math
 
+# Полуширина «полосы»: макс. смещение врага вбок от центра дороги (px).
+# Дорога — 1 тайл (65px), поэтому 18 держит толпу в пределах дороги.
+LANE_HALF_WIDTH = 18
+
+
 class EnemyMovement:
     """Управление движением и коллизиями врага"""
-    
+
     def __init__(self, enemy):
         self.enemy = enemy
         self.move_distance = 0
         self.stuck_timer = 0
         self.stuck_threshold = 0.5
+
+    def _offset_target(self, target_x, target_y, dx, dy, distance):
+        """Сдвигает целевую точку вбок перпендикулярно движению.
+
+        Даёт врагам постоянное боковое смещение (lane_offset), чтобы они
+        шли толпой, а не по одной линии. Перпендикуляр к (dx,dy) — это
+        (-dy, dx), нормированный.
+        """
+        if distance < 1:
+            return target_x, target_y
+        nx, ny = -dy / distance, dx / distance
+        shift = self.enemy.lane_offset * LANE_HALF_WIDTH
+        return target_x + nx * shift, target_y + ny * shift
     
     def update(self, dt: float):
         """Обновляет движение врага"""
@@ -67,19 +85,26 @@ class EnemyMovement:
         else:
             enemy.direction = 'down' if dy > 0 else 'up'
         
+        # Смещаем цель вбок для «толпы»; продвижение по waypoint считаем
+        # по исходной дистанции до центра, чтобы враг не застревал.
+        aim_x, aim_y = self._offset_target(target_x, target_y, dx, dy, distance)
+        adx = aim_x - enemy.x
+        ady = aim_y - enemy.y
+        aim_dist = math.hypot(adx, ady)
+
         current_speed = enemy.speed * enemy.effects.slow_multiplier
         self.move_distance = current_speed * dt
-        
+
         new_x = enemy.x
         new_y = enemy.y
-        
+
         if self.move_distance >= distance:
             new_x = target_x
             new_y = target_y
-        else:
-            new_x += (dx / distance) * self.move_distance
-            new_y += (dy / distance) * self.move_distance
-        
+        elif aim_dist > 0:
+            new_x += (adx / aim_dist) * self.move_distance
+            new_y += (ady / aim_dist) * self.move_distance
+
         # Проверяем коллизию
         if not self._check_collision(new_x, new_y):
             enemy.x = new_x
@@ -131,14 +156,19 @@ class EnemyMovement:
         
         current_speed = enemy.speed * enemy.effects.slow_multiplier
         self.move_distance = current_speed * dt
-        
+
+        aim_x, aim_y = self._offset_target(target_x, target_y, dx, dy, distance)
+        adx = aim_x - enemy.x
+        ady = aim_y - enemy.y
+        aim_dist = math.hypot(adx, ady)
+
         if self.move_distance >= distance:
             enemy.x = target_x
             enemy.y = target_y
             enemy.current_target_index += 1
-        else:
-            enemy.x += (dx / distance) * self.move_distance
-            enemy.y += (dy / distance) * self.move_distance
+        elif aim_dist > 0:
+            enemy.x += (adx / aim_dist) * self.move_distance
+            enemy.y += (ady / aim_dist) * self.move_distance
         
         enemy.rect.x = enemy.x - enemy.width // 2
         enemy.rect.y = enemy.y - enemy.height // 2

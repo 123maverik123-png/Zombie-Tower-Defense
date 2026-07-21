@@ -48,6 +48,10 @@ class Enemy(Entity):
         self.current_target_index = 1
         self.reached_end = False
 
+        # Боковое смещение от центра дороги [-1..1] — чтобы враги шли
+        # толпой, а не по одной линии. Умножается на LANE_WIDTH в movement.
+        self.lane_offset = random.uniform(-1.0, 1.0)
+
         # Награда
         self.reward_gold = config.get('reward_gold', 5)
         self.reward_exp = config.get('reward_exp', 3)
