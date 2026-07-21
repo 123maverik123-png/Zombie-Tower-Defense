@@ -246,7 +246,7 @@ class SpriteLoader:
             font = pygame.font.Font(None, size//2)
             text = font.render("?", True, (255, 255, 255))
             surf.blit(text, (size//2 - text.get_width()//2, size//2 - text.get_height()//2))
-        except:
+        except Exception:
             pass
         return surf
     

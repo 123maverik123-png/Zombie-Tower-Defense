@@ -258,7 +258,7 @@ class SaveSystem:
             try:
                 data = json.loads(result[0])
                 return LevelData.from_dict(data)
-            except:
+            except Exception:
                 pass
         
         return LevelData()

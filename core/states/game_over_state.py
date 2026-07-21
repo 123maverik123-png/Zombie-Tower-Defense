@@ -28,12 +28,12 @@ class GameOverState(State):
         
         try:
             self.title_font = load_title_font(70)
-        except:
+        except Exception:
             self.title_font = pygame.font.Font(None, 70)
         
         try:
             self.small_font = load_ui_font(32)
-        except:
+        except Exception:
             self.small_font = pygame.font.Font(None, 32)
 
         self._music_started = False
@@ -123,7 +123,7 @@ class GameOverState(State):
         title_font_size = max(50, int(70 * (screen_w / 1920)))
         try:
             title_font = load_title_font(title_font_size)
-        except:
+        except Exception:
             title_font = pygame.font.Font(None, title_font_size)
         
         text = title_font.render("YOU HAVE FALLEN", True, DANGER_BRIGHT)
@@ -143,7 +143,7 @@ class GameOverState(State):
         mid_font_size = max(22, int(32 * (screen_w / 1920)))
         try:
             mid_font = load_ui_font(mid_font_size)
-        except:
+        except Exception:
             mid_font = pygame.font.Font(None, mid_font_size)
         
         texts = [
@@ -209,7 +209,7 @@ class GameOverState(State):
         font_size = max(18, int(30 * (rect.width / 300)))
         try:
             btn_font = load_ui_font(font_size)
-        except:
+        except Exception:
             btn_font = pygame.font.Font(None, font_size)
         
         text_color = GOLD_BRIGHT if hovered else PARCHMENT

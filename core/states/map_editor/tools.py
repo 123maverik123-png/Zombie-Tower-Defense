@@ -34,7 +34,7 @@ class MapEditorTools:
                     state.tile_sprites[name] = img
                 else:
                     self._create_fallback_tile(name)
-            except:
+            except Exception:
                 self._create_fallback_tile(name)
 
     def _create_fallback_tile(self, name):

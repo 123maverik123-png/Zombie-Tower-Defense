@@ -81,7 +81,7 @@ class ChannelManager:
                 channel = pygame.mixer.Channel(i)
                 if channel.get_busy():
                     channel.stop()
-            except:
+            except Exception:
                 pass
         
         self._loop_channels.clear()

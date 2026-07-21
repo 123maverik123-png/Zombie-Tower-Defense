@@ -75,7 +75,7 @@ class Projectile(Entity):
             loader = ResourceLoader()
             image_name = f"projectiles/{self.projectile_type}.png"
             self.image = loader.load_image(image_name, scale=(self.width, self.height))
-        except:
+        except Exception:
             self.image = self._create_fallback_image()
     
     def _create_fallback_image(self) -> pygame.Surface:

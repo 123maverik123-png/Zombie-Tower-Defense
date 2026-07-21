@@ -15,7 +15,7 @@ def load_font(size, use_toxic=True):
     if use_toxic:
         try:
             return pygame.font.Font("assets/fonts/ToxicRot-Regular.ttf", size)
-        except:
+        except Exception:
             return pygame.font.Font(None, size)
     
     return pygame.font.Font(None, size)
@@ -24,7 +24,7 @@ def load_title_font(size):
     """Для заголовков — ToxicRot"""
     try:
         return pygame.font.Font("assets/fonts/ToxicRot-Regular.ttf", size)
-    except:
+    except Exception:
         return pygame.font.Font(None, size)
 
 def load_ui_font(size):

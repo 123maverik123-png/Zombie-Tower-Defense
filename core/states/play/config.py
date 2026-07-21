@@ -17,7 +17,7 @@ class PlayStateConfig:
         try:
             with open('data/configs/towers.json', 'r') as f:
                 config = json.load(f).get(tower_type, {})
-        except:
+        except Exception:
             return {}
         
         if not config:

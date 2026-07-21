@@ -70,7 +70,7 @@ class ProfileSelectState(State):
         if os.path.exists(bg_path):
             try:
                 self.background = pygame.image.load(bg_path).convert()
-            except:
+            except Exception:
                 self.background = None
         else:
             self.background = None

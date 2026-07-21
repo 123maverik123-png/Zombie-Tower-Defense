@@ -21,7 +21,7 @@ class EnemyFactory:
         try:
             with open(config_path, 'r') as f:
                 return json.load(f)
-        except:
+        except Exception:
             print(f"⚠️ Could not load enemy configs from {config_path}")
             return {}
     

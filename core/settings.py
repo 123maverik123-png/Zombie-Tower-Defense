@@ -81,7 +81,7 @@ class GameSettings:
                 with open(self.settings_file, 'w', encoding='utf-8') as f:
                     json.dump(self.settings, f, indent=4, ensure_ascii=False)
                 return True
-            except:
+            except Exception:
                 return False
     
     def get(self, key, default=None):

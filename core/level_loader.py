@@ -81,5 +81,5 @@ def level_exists(level_number: int) -> bool:
     try:
         from data.levels_data import LEVELS
         return level_number in LEVELS
-    except:
+    except Exception:
         return False

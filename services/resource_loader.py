@@ -77,7 +77,7 @@ class ResourceLoader:
             font = pygame.font.Font(path, size)
             self.fonts[cache_key] = font
             return font
-        except:
+        except Exception:
             font = pygame.font.Font(None, size)
             self.fonts[cache_key] = font
             return font
