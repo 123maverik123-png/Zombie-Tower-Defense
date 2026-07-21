@@ -26,10 +26,14 @@ class AtlasRegion:
     v1: float = 0.0
 
     def __post_init__(self):
-        self.u0 = self.x / PAGE_SIZE
-        self.v0 = self.y / PAGE_SIZE
-        self.u1 = (self.x + self.w) / PAGE_SIZE
-        self.v1 = (self.y + self.h) / PAGE_SIZE
+        # Half-texel inset: сдвигаем UV на пол-пикселя внутрь региона, чтобы
+        # при семплинге на границе не захватывался соседний пиксель атласа
+        # (иначе слева/сверху появлялась полоса в 1px у прозрачных спрайтов).
+        eps = 0.5 / PAGE_SIZE
+        self.u0 = self.x / PAGE_SIZE + eps
+        self.v0 = self.y / PAGE_SIZE + eps
+        self.u1 = (self.x + self.w) / PAGE_SIZE - eps
+        self.v1 = (self.y + self.h) / PAGE_SIZE - eps
 
 
 def surface_swizzle(surface: pygame.Surface) -> str:
