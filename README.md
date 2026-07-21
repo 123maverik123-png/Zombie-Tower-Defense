@@ -10,8 +10,6 @@
 ![OpenGL](https://img.shields.io/badge/OpenGL-3.3-red)
 ![Version](https://img.shields.io/badge/version-1.5.3-brightgreen)
 
-<img src="screenshot_new_gfx.png" alt="Геймплей Zombie Tower Defense" width="80%">
-
 </div>
 
 ## 🎮 Об игре
@@ -28,17 +26,6 @@
 - **Профили игроков** с прогрессом, Normal и Hardcore режимы
 - **Редактор карт** — создавайте свои уровни и играйте на них
 - **Полный GPU-рендеринг**: сотни врагов и тысячи частиц без просадок FPS
-
-## 📸 Скриншоты
-
-<div align="center">
-
-<img src="screenshot_dark.png" alt="Оборона замка" width="45%">
-<img src="screenshot_ptowers.png" alt="Башни" width="45%">
-<img src="screenshot_pzombie.png" alt="Зомби" width="45%">
-<img src="screenshot_dark2.png" alt="Ночная волна" width="45%">
-
-</div>
 
 ## 🕹️ Управление
 
