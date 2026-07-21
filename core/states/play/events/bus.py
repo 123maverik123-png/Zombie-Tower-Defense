@@ -10,6 +10,7 @@ class BusEvents:
     
     def __init__(self, state):
         self.state = state
+        self._water_sound_ticks = 0  # троттлинг звука водяной струи
     
     def setup(self):
         EventBus.subscribe('enemy_killed', self._on_enemy_killed)
@@ -129,9 +130,12 @@ class BusEvents:
         elif tower_id == 'electric':
             state.audio.play_sound("shoot", volume_override=0.3)
         elif tower_id == 'water':
-            state.audio.play_sound("water_shoot", volume_override=0.25)
-            if target:
-                state.audio.play_sound("water_hit", volume_override=0.2)
+            # Струя бьёт ~10 раз/сек — звук проигрываем не чаще ~2.5 раз/сек
+            import pygame
+            now = pygame.time.get_ticks()
+            if now - self._water_sound_ticks >= 400:
+                self._water_sound_ticks = now
+                state.audio.play_sound("water_shoot", volume_override=0.25)
         elif tower_id == 'freeze':
             state.audio.play_sound("freeze_shoot", volume_override=0.25)
             if target:
