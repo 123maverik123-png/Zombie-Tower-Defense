@@ -504,9 +504,91 @@ def base_flamethrower(g, lv, gl):
         px(g, 25, 16, RUST)
 
 
+def head_sniper(g, lv, gl):
+    """Ствол снайперки в плане: длинный ствол вправо, приклад слева."""
+    # Деревянный приклад (сзади, слева от оси)
+    rect(g, 6, 14, 9, 18, WOOD)
+    rect(g, 6, 14, 9, 14, RUST_D)
+    # Ствольная коробка на оси
+    rect(g, 10, 13, 16, 18, IRON)
+    rect(g, 10, 13, 16, 13, IRON_L)
+    px(g, 11, 17, IRON_L)  # заклёпка
+    px(g, 15, 17, IRON_L)
+    # Оптический прицел сверху коробки
+    rect(g, 11, 11, 15, 12, IRON_D)
+    px(g, 14, 11, gl)
+    # Очень длинный ствол вправо
+    blen = 12 + lv
+    rect(g, 17, 15, 16 + blen, 16, IRON_L)
+    rect(g, 17, 15, 16 + blen, 15, IRON)
+    # Дульный тормоз
+    if lv >= 3:
+        rect(g, 16 + blen, 14, 17 + blen, 17, IRON_D)
+    if lv >= 4:
+        px(g, 18 + blen, 15, gl)  # дульная энергия
+        px(g, 18 + blen, 16, gl)
+
+
+def base_sniper(g, lv, gl):
+    """База снайперки: платформа + тренога с поворотной тумбой."""
+    draw_base(g, lv, gl)
+    # Тренога
+    rect(g, 14, 16, 17, 19, IRON)
+    rect(g, 11, 18, 12, 19, IRON_D)
+    rect(g, 19, 18, 20, 19, IRON_D)
+    # Поворотная тумба по центру
+    rect(g, 14, 15, 17, 16, IRON_D)
+    px(g, 15, 16, IRON_L)  # ось
+    px(g, 16, 16, IRON_L)
+
+
+def head_water(g, lv, gl):
+    """Водомёт в плане: ствол-брандспойт вправо, бачок сзади."""
+    liquid = (60, 120, 210)
+    # Насосный бачок (сзади, слева от оси)
+    rect(g, 7, 12, 10, 18, IRON)
+    rect(g, 7, 12, 10, 12, IRON_L)
+    rect(g, 8, 14, 9, 16, liquid)  # смотровое окно
+    # Корпус помпы на оси
+    rect(g, 11, 13, 17, 18, IRON)
+    rect(g, 11, 13, 17, 13, IRON_L)
+    px(g, 12, 17, IRON_L)
+    px(g, 16, 17, IRON_L)
+    # Ствол-брандспойт вправо
+    blen = 7 + lv
+    rect(g, 18, 14, 17 + blen, 17, IRON_D)
+    rect(g, 18, 14, 17 + blen, 14, IRON_L)
+    # Раструб-сопло
+    rect(g, 18 + blen, 13, 19 + blen, 18, IRON_L)
+    # Капли воды на срезе
+    px(g, 20 + blen, 15, (140, 190, 255))
+    px(g, 21 + blen, 16, liquid)
+    if lv >= 4:
+        px(g, 22 + blen, 15, (200, 230, 255))
+
+
+def base_water(g, lv, gl):
+    """База водомёта: платформа + бак-резервуар + поворотная тумба."""
+    draw_base(g, lv, gl)
+    liquid = (60, 120, 210)
+    # Резервуар слева на платформе
+    rect(g, 5, 12, 10, 21, IRON)
+    rect(g, 5, 12, 10, 13, IRON_L)
+    rect(g, 6, 15, 9, 19, liquid)  # вода в баке
+    px(g, 7, 16, (140, 190, 255))
+    # Поворотная тумба по центру
+    rect(g, 14, 16, 19, 19, IRON_D)
+    px(g, 16, 17, IRON_L)
+    if lv >= 3:
+        rect(g, 25, 15, 26, 21, IRON)  # доп. труба справа
+        px(g, 25, 17, liquid)
+
+
 ROTATING = {
     'turret': (base_turret, head_turret),
     'flamethrower': (base_flamethrower, head_flamethrower),
+    'sniper': (base_sniper, head_sniper),
+    'water': (base_water, head_water),
 }
 
 

@@ -9,7 +9,7 @@ class TowerVisuals:
     """Управление отрисовкой башни"""
 
     # Башни с поворотной головой: base = level_N.png, head = head_N.png
-    ROTATING_IDS = ('turret', 'flamethrower')
+    ROTATING_IDS = ('turret', 'flamethrower', 'sniper', 'water')
 
     def __init__(self, tower):
         self.tower = tower
