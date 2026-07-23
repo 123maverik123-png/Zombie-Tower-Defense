@@ -119,7 +119,9 @@ class AcidPool:
         # Затухание к концу жизни
         progress = self.duration / self.max_duration if self.max_duration else 1
         alpha = int(220 * min(1.0, progress * 1.8))
+        from core.iso import world_to_screen
+        sx, sy = world_to_screen(self.x, self.y)
         draw = self.radius * 2.2
-        renderer.batch.draw(region, self.x + offset_x, self.y + offset_y,
+        renderer.batch.draw(region, sx + offset_x, sy + offset_y,
                             draw, draw, rotation=self.rotation,
                             color=(255, 255, 255, alpha))

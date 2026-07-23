@@ -141,20 +141,23 @@ class Enemy(Entity):
         """Позиционирует раны на теле по текущим координатам врага.
 
         Спрайт рисуется от (y - h/1.2) вверх, тело занимает по вертикали
-        примерно [y - 0.83h .. y + 0.17h]. Раскидываем раны от головы к ногам.
+        примерно [y - 0.83h .. y + 0.17h] в ЭКРАННЫХ пикселях (после изопроекции).
+        Раскидываем раны от головы к ногам через screen-space подъём z, а не
+        сдвиг мировых координат — иначе изопроекция шерит смещение по диагонали.
         """
         if not self.wounds:
             return
-        head_y = self.y - self.height * 0.78
-        feet_y = self.y + self.height * 0.05
+        head_z = self.height * 0.78
+        feet_z = -self.height * 0.05
         if self.is_flying:
             # Летающий спрайт парит выше — раны смещаем вместе с ним
             lift = self.height * 0.55 + self.visuals.float_offset
-            head_y -= lift
-            feet_y -= lift
+            head_z += lift
+            feet_z += lift
         for w in self.wounds:
             w['decal'].x = self.x + w['fx'] * self.width
-            w['decal'].y = head_y + (feet_y - head_y) * w['fy']
+            w['decal'].y = self.y
+            w['decal'].z = head_z + (feet_z - head_z) * w['fy']
             w['decal'].update(dt)
 
     def on_reach_end(self):

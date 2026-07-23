@@ -1,4 +1,5 @@
 # core/states/play/draw/terrain.py
+from core.iso import world_to_screen
 
 
 class TerrainDraw:
@@ -20,12 +21,14 @@ class TerrainDraw:
 
         # 2. Декали на земле (только видимые)
         for decal in state.decals:
-            if -100 < decal.x + ox < screen_w + 100 and -100 < decal.y + oy < screen_h + 100:
+            dsx, dsy = world_to_screen(decal.x, decal.y)
+            if -100 < dsx + ox < screen_w + 100 and -100 < dsy + oy < screen_h + 100:
                 decal.draw_batch(renderer, ox, oy)
 
         # 2.5 Кислотные лужи на земле (под сущностями)
         for pool in getattr(state, 'acid_pools', []):
-            if -100 < pool.x + ox < screen_w + 100 and -100 < pool.y + oy < screen_h + 100:
+            psx, psy = world_to_screen(pool.x, pool.y)
+            if -100 < psx + ox < screen_w + 100 and -100 < psy + oy < screen_h + 100:
                 pool.draw_batch(renderer, ox, oy)
 
         # Ворота и стены рисуются в EntitiesDraw (y-сортировка с врагами)

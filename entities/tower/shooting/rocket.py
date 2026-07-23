@@ -39,7 +39,8 @@ class RocketShooting:
             'damage_type': 'explosive',
             'projectile': None,
             'tower_x': tower.x,
-            'tower_y': tower.y
+            'tower_y': tower.y,
+            'tower_height': tower.height
         })
         
         EventBus.emit('aoe_damage_request', {

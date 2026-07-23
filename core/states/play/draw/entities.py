@@ -1,4 +1,5 @@
 # core/states/play/draw/entities.py
+from core.iso import world_to_screen
 
 
 class EntitiesDraw:
@@ -27,7 +28,8 @@ class EntitiesDraw:
 
         for enemy in state.enemies:
             if not enemy.states.is_dead():
-                sx, sy = enemy.x + ox, enemy.y + oy
+                esx, esy = world_to_screen(enemy.x, enemy.y)
+                sx, sy = esx + ox, esy + oy
                 if -100 < sx < screen_w + 100 and -100 < sy < screen_h + 100:
                     # Трупы — на земле, под всеми стоящими;
                     # летающие — в воздухе, поверх всех стоящих
@@ -78,11 +80,9 @@ class EntitiesDraw:
         # ===== Поверх стоящих: снаряды, струи, вспышки =====
 
         for proj in state.projectiles:
-            if -100 < proj.x + ox < screen_w + 100 and -100 < proj.y + oy < screen_h + 100:
+            psx, psy = world_to_screen(proj.x, proj.y)
+            if -100 < psx + ox < screen_w + 100 and -100 < psy + oy < screen_h + 100:
                 proj.draw_batch(renderer, ox, oy)
 
         for tower in state.towers:
             tower.visuals.draw_flame_batch(renderer, ox, oy)
-
-        for flash in state.decals_logic.muzzle_flashes:
-            flash.draw_batch(renderer, ox, oy)

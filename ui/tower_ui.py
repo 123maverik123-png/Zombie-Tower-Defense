@@ -1,6 +1,7 @@
 # ui/tower_ui.py
 import pygame
 from core.font_loader import load_ui_font
+from core.iso import world_to_screen
 from core.theme import GOLD, GOLD_BRIGHT, STONE_DARK, STONE_MID, PARCHMENT, TEAL_GLOW, DANGER, DANGER_BRIGHT
 
 
@@ -121,8 +122,9 @@ class TowerUI:
         if not self.active or not self.tower:
             return
 
-        btn_offset_x = self.position[0] + offset_x
-        btn_offset_y = self.position[1] + offset_y
+        psx, psy = world_to_screen(self.position[0], self.position[1])
+        btn_offset_x = psx + offset_x
+        btn_offset_y = psy + offset_y
 
         btn_size = 40
         spacing = 10

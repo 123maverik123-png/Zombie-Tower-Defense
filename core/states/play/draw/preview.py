@@ -1,6 +1,8 @@
 # core/states/play/draw/preview.py
 import pygame
 
+from core.iso import world_to_screen
+
 
 class PreviewDraw:
     """Отрисовка превью строительства (башни, ворота, стены)"""
@@ -14,7 +16,6 @@ class PreviewDraw:
         if not state.building_mode and not state.wall_placement_mode:
             return
 
-        ox, oy = state.tile_manager.get_offset()
         tile_size = state.tile_manager.tile_size
         mx, my = pygame.mouse.get_pos()
 
@@ -23,46 +24,57 @@ class PreviewDraw:
             return
         mx, my = converted
 
-        wx = int((mx - ox) // tile_size)
-        wy = int((my - oy) // tile_size)
+        wx, wy = state.tile_manager.get_grid_position(mx, my)
 
         if not (0 <= wx < state.tile_manager.map_width and 0 <= wy < state.tile_manager.map_height):
             return
 
-        cell_x = wx * tile_size + ox
-        cell_y = wy * tile_size + oy
+        # Центр клетки на экране (та же изопроекция, что и в draw.py)
+        ox, oy = state.tile_manager.get_offset()
+        world_cx = (wx + 0.5) * tile_size
+        world_cy = (wy + 0.5) * tile_size
+        sx, sy = world_to_screen(world_cx, world_cy)
+        cx = sx + ox
+        cy = sy + oy
 
         if state.wall_placement_mode:
-            self._draw_wall_preview(screen, state, wx, wy, cell_x, cell_y, tile_size)
+            self._draw_wall_preview(screen, state, wx, wy, cx, cy, tile_size)
         else:
-            self._draw_tower_preview(screen, state, wx, wy, cell_x, cell_y, tile_size)
+            self._draw_tower_preview(screen, state, wx, wy, cx, cy, tile_size)
 
     def _cell_occupied(self, state, wx, wy):
         return state.towers_logic._is_position_occupied(wx, wy)
 
-    def _draw_cell_highlight(self, screen, cell_x, cell_y, tile_size, can_build):
-        """Зелёный/красный квадрат на клетке под курсором"""
+    def _draw_cell_highlight(self, screen, cx, cy, tile_size, can_build):
+        """Зелёный/красный ромб на клетке под курсором (совпадает с формой изо-тайла)"""
+        iso_w, iso_h = tile_size, tile_size * 0.5
+        points = [
+            (cx, cy - iso_h / 2),
+            (cx + iso_w / 2, cy),
+            (cx, cy + iso_h / 2),
+            (cx - iso_w / 2, cy),
+        ]
+
         color = (0, 255, 0, 80) if can_build else (255, 0, 0, 80)
-        s = pygame.Surface((tile_size, tile_size), pygame.SRCALPHA)
-        s.fill(color)
-        screen.blit(s, (cell_x, cell_y))
+        s = pygame.Surface((int(iso_w) + 2, int(iso_h) + 2), pygame.SRCALPHA)
+        local_points = [(px - (cx - iso_w / 2), py - (cy - iso_h / 2)) for px, py in points]
+        pygame.draw.polygon(s, color, local_points)
+        screen.blit(s, (cx - iso_w / 2, cy - iso_h / 2))
 
         border_color = (0, 255, 0) if can_build else (255, 0, 0)
-        pygame.draw.rect(screen, border_color, (cell_x, cell_y, tile_size, tile_size), 2)
+        pygame.draw.polygon(screen, border_color, points, 2)
 
-    def _draw_tower_preview(self, screen, state, wx, wy, cell_x, cell_y, tile_size):
+    def _draw_tower_preview(self, screen, state, wx, wy, cx, cy, tile_size):
         tile = state.tile_manager.map_data[wy][wx]
         can_build = not tile.startswith('road_') and tile not in ('portal', 'castle')
         if can_build and self._cell_occupied(state, wx, wy):
             can_build = False
 
-        self._draw_cell_highlight(screen, cell_x, cell_y, tile_size, can_build)
+        self._draw_cell_highlight(screen, cx, cy, tile_size, can_build)
 
         # Квадратная зона поражения (сторона 2×range, выровнена по клеткам)
         config = state._get_tower_config(state.selected_tower)
         radius = config.get('range', 200)
-        cx = cell_x + tile_size // 2
-        cy = cell_y + tile_size // 2
 
         side = radius * 2
         range_surf = pygame.Surface((side, side), pygame.SRCALPHA)
@@ -74,9 +86,9 @@ class PreviewDraw:
         cost = config.get('cost', 100)
         info_text = f"{name} (${cost})"
         text = state.small_font.render(info_text, True, (255, 255, 255))
-        screen.blit(text, (cx - text.get_width()//2, cell_y - 30))
+        screen.blit(text, (cx - text.get_width()//2, cy - tile_size // 2 - 30))
 
-    def _draw_wall_preview(self, screen, state, wx, wy, cell_x, cell_y, tile_size):
+    def _draw_wall_preview(self, screen, state, wx, wy, cx, cy, tile_size):
         """Подсветка клетки + полупрозрачный спрайт выбранного укрепления."""
         tile = state.tile_manager.map_data[wy][wx]
 
@@ -99,18 +111,17 @@ class PreviewDraw:
         if can_build and self._cell_occupied(state, wx, wy):
             can_build = False
 
-        self._draw_cell_highlight(screen, cell_x, cell_y, tile_size, can_build)
+        self._draw_cell_highlight(screen, cx, cy, tile_size, can_build)
 
         # Полупрозрачный спрайт выбранного укрепления в клетке
-        self._blit_ghost(screen, sprite_name, cell_x, cell_y, tile_size)
+        self._blit_ghost(screen, sprite_name, cx, cy, tile_size)
 
-        cx = cell_x + tile_size // 2
         text = state.small_font.render(f"{name} (${cost})", True, (255, 255, 255))
-        screen.blit(text, (cx - text.get_width()//2, cell_y - 30))
+        screen.blit(text, (cx - text.get_width()//2, cy - tile_size // 2 - 30))
 
     _ghost_cache = {}
 
-    def _blit_ghost(self, screen, sprite_name, cell_x, cell_y, tile_size):
+    def _blit_ghost(self, screen, sprite_name, cx, cy, tile_size):
         """Рисует полупрозрачный спрайт укрепления по центру клетки."""
         img = self._ghost_cache.get((sprite_name, tile_size))
         if img is None:
@@ -122,6 +133,6 @@ class PreviewDraw:
                 self._ghost_cache[(sprite_name, tile_size)] = img
             except Exception:
                 return
-        gx = cell_x + (tile_size - img.get_width()) // 2
-        gy = cell_y + (tile_size - img.get_height()) // 2
+        gx = cx - img.get_width() // 2
+        gy = cy - img.get_height() // 2
         screen.blit(img, (gx, gy))

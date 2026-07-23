@@ -113,12 +113,14 @@ class DecorationLayer:
         self._draw_one(renderer, name, px, py, size, ox, oy)
 
     def _draw_one(self, renderer, name, px, py, size, ox, oy):
+        from core.iso import world_to_screen
         shadow = renderer.get_region('__shadow__')
         atlas_name = f"decor_{self.biome}_{name}"
         if not renderer.has_texture(atlas_name):
             renderer.load_texture(atlas_name, self.sprites[name])
         region = renderer.get_region(atlas_name)
-        x, y = px + ox, py + oy
+        sx, sy = world_to_screen(px, py)
+        x, y = sx + ox, sy + oy
         if shadow:
             renderer.batch.draw(shadow, x + 2, y + size * 0.38,
                                 size * 0.8, size * 0.28,

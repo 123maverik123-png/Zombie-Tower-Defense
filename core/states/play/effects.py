@@ -20,18 +20,6 @@ class PlayEffects:
         effect = HitEffect(target.x, target.y, effect_type)
         state.hit_effects.append(effect)
     
-    def add_muzzle_effect(self, x, y, tower_id):
-        state = self.state
-        effect_type = {
-            'sniper': 'sniper',
-            'turret': 'turret',
-            'electric': 'electric'
-        }.get(tower_id)
-        
-        if effect_type:
-            effect = HitEffect(x, y, effect_type)
-            state.hit_effects.append(effect)
-    
     def add_explosion_effect(self, x, y):
         state = self.state
         effect = HitEffect(x, y, 'explosive')

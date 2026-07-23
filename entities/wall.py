@@ -134,8 +134,10 @@ class Wall(Entity):
         if not self.alive:
             return
         batch = renderer.batch
-        cx = self.x + offset_x
-        cy = self.y + offset_y
+        from core.iso import world_to_screen
+        sx, sy = world_to_screen(self.x, self.y)
+        cx = sx + offset_x
+        cy = sy + offset_y
 
         name = f"wall_{self.variant}_{int(self.x)}_{int(self.y)}"
         if not renderer.has_texture(name):

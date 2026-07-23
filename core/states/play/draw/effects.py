@@ -2,6 +2,7 @@
 import pygame
 
 from core.opengl.batch import BLEND_ADDITIVE
+from core.iso import world_to_screen
 
 
 class EffectsDraw:
@@ -16,7 +17,8 @@ class EffectsDraw:
 
         # 1. Эффекты попадания (только видимые)
         for effect in state.hit_effects:
-            if -100 < effect.x + ox < state.game.render_width + 100 and -100 < effect.y + oy < state.game.render_height + 100:
+            esx, esy = world_to_screen(effect.x, effect.y)
+            if -100 < esx + ox < state.game.render_width + 100 and -100 < esy + oy < state.game.render_height + 100:
                 effect.draw_batch(renderer, ox, oy)
 
         # 2. Круги фидбека строительства
@@ -67,10 +69,13 @@ class EffectsDraw:
             is_chain = effect.get('is_chain', False)
             max_timer = 0.25 if not is_chain else 0.2
             alpha = int(255 * (timer / max_timer))
-            x1 = from_pos[0] + offset_x
-            y1 = from_pos[1] + offset_y
-            x2 = to_pos[0] + offset_x
-            y2 = to_pos[1] + offset_y
+            from core.iso import world_to_screen
+            fx, fy = world_to_screen(*from_pos)
+            tx, ty = world_to_screen(*to_pos)
+            x1 = fx + offset_x
+            y1 = fy + offset_y
+            x2 = tx + offset_x
+            y2 = ty + offset_y
 
             # Ядро и широкий ореол
             batch.draw_line(x1, y1, x2, y2, 3, (255, 255, 255, alpha), blend=BLEND_ADDITIVE)

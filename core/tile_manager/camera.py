@@ -13,33 +13,25 @@ class Camera:
         self.y = 0
     
     def center(self, map_width: int, map_height: int, tile_size: int):
-        """
-        Центрирует камеру на карте.
-        camera.x и camera.y — отрицательные отступы (позиция камеры в мире).
-        """
+        """Центрирует камеру на изометрической карте по bounding box ромба."""
         if map_width == 0 or map_height == 0:
             self.x = 0
             self.y = 0
             return
-        
-        map_pixel_width = map_width * tile_size
-        map_pixel_height = map_height * tile_size
-        
-        if map_pixel_width < self.screen_width:
-            self.x = -(self.screen_width - map_pixel_width) // 2
-        else:
-            self.x = 0
-        
-        if map_pixel_height < self.available_height:
-            self.y = -(self.available_height - map_pixel_height) // 2
-        else:
-            self.y = 0
-        
-        self.x = int(self.x)
-        self.y = int(self.y)
-        
-        print(f"🎯 Camera centered: ({self.x}, {self.y})")
-        print(f"   Map: {map_pixel_width}x{map_pixel_height}, Screen: {self.screen_width}x{self.available_height}")
+
+        # Изо bounding box: ромб (W+H)*ts*0.5 wide, (W+H)*ts*0.25 tall
+        # Левый край ромба в экранных координатах (до offset): -H*ts*0.5
+        iso_w = (map_width + map_height) * tile_size * 0.5
+        iso_h = (map_width + map_height) * tile_size * 0.25
+        left_edge = -map_height * tile_size * 0.5
+
+        offset_x = (self.screen_width - iso_w) / 2 - left_edge
+        offset_y = max((self.available_height - iso_h) / 2, 0)
+
+        self.x = -int(offset_x)
+        self.y = -int(offset_y)
+
+        print(f"Camera iso centered: ({self.x}, {self.y}), iso_box={int(iso_w)}x{int(iso_h)}")
     
     def get_offset(self) -> Tuple[int, int]:
         """Возвращает смещение для отрисовки (положительные значения). offset = -camera_position"""

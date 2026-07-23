@@ -2,6 +2,7 @@
 import math
 import pygame
 import random
+from core.iso import world_to_screen
 from typing import Optional, Tuple, List
 from entities.base import Entity
 
@@ -359,16 +360,17 @@ class Projectile(Entity):
             return
         from core.opengl.batch import BLEND_ADDITIVE
         batch = renderer.batch
-        cx = self.x + offset_x
-        cy = self.y + offset_y
+        sx, sy = world_to_screen(self.x, self.y)
+        cx = sx + offset_x
+        cy = sy + offset_y
 
         if self.projectile_type == 'flamethrower' and len(self.trail) > 1:
             for i in range(len(self.trail) - 1):
                 alpha = int(255 * (i / len(self.trail)))
-                x1, y1 = self.trail[i]
-                x2, y2 = self.trail[i + 1]
-                batch.draw_line(x1 + offset_x, y1 + offset_y,
-                                x2 + offset_x, y2 + offset_y,
+                tx1, ty1 = world_to_screen(*self.trail[i])
+                tx2, ty2 = world_to_screen(*self.trail[i + 1])
+                batch.draw_line(tx1 + offset_x, ty1 + offset_y,
+                                tx2 + offset_x, ty2 + offset_y,
                                 3, (255, 150, 50, alpha), blend=BLEND_ADDITIVE)
 
         if self.projectile_type == 'acid' and len(self.trail) > 1:
@@ -376,9 +378,9 @@ class Projectile(Entity):
             for i in range(len(self.trail) - 1):
                 t = i / len(self.trail)
                 alpha = int(180 * t)
-                x1, y1 = self.trail[i]
+                tx1, ty1 = world_to_screen(*self.trail[i])
                 size = int(4 + 6 * t)
-                batch.draw(soft, x1 + offset_x, y1 + offset_y, size, size,
+                batch.draw(soft, tx1 + offset_x, ty1 + offset_y, size, size,
                            color=(90, 220, 60, alpha), blend=BLEND_ADDITIVE)
 
         if self.projectile_type == 'electric':
@@ -386,7 +388,8 @@ class Projectile(Entity):
             soft = renderer.get_region('__soft__')
             for p in self.lightning_particles:
                 alpha = int(255 * (p['life'] / 0.3))
-                px, py = p['x'] + offset_x, p['y'] + offset_y
+                psx, psy = world_to_screen(p['x'], p['y'])
+                px, py = psx + offset_x, psy + offset_y
                 batch.draw(dot, px, py, 4, 4, color=(200, 255, 255, alpha), blend=BLEND_ADDITIVE)
                 batch.draw(soft, px, py, 8, 8, color=(100, 200, 255, alpha // 2), blend=BLEND_ADDITIVE)
 

@@ -49,7 +49,8 @@ class AcidShooting:
             'damage_type': 'acid',
             'projectile': projectile,
             'tower_x': tower.x,
-            'tower_y': tower.y
+            'tower_y': tower.y,
+            'tower_height': tower.height
         })
 
         # Снаряд добавляется в state через bus._on_tower_shot (projectile),

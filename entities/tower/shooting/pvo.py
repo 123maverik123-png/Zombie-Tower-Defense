@@ -32,7 +32,8 @@ class PVOShooting:
             'damage_type': tower.damage_type,
             'projectile': None,
             'tower_x': tower.x,
-            'tower_y': tower.y
+            'tower_y': tower.y,
+            'tower_height': tower.height
         })
         
         return None

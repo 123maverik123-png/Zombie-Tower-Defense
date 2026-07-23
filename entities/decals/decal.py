@@ -11,10 +11,11 @@ from .types import get_decal_config
 class Decal:
     """Декаль — след на земле от попаданий, взрывов и т.д."""
     
-    def __init__(self, x: float, y: float, decal_type: str, 
-                 rotation: float = None, scale: float = 1.0):
+    def __init__(self, x: float, y: float, decal_type: str,
+                 rotation: float = None, scale: float = 1.0, z: float = 0.0):
         self.x = x
         self.y = y
+        self.z = z  # подъём над землёй в экранных пикселях (напр. рана на теле врага)
         self.type = decal_type
         
         config = get_decal_config(decal_type)
@@ -260,7 +261,7 @@ class Decal:
         image.set_alpha(self.current_alpha)
 
         draw_x = self.x + offset_x - image.get_width() // 2
-        draw_y = self.y + offset_y - image.get_height() // 2
+        draw_y = self.y + offset_y - self.z - image.get_height() // 2
         screen.blit(image, (draw_x, draw_y))
 
     def draw_batch(self, renderer, offset_x: int = 0, offset_y: int = 0):
@@ -284,6 +285,8 @@ class Decal:
             renderer.load_texture(name, image)
         region = renderer.get_region(name)
 
-        renderer.batch.draw(region, self.x + offset_x, self.y + offset_y,
+        from core.iso import world_to_screen
+        sx, sy = world_to_screen(self.x, self.y)
+        renderer.batch.draw(region, sx + offset_x, sy + offset_y - self.z,
                             region.w, region.h,
                             color=(255, 255, 255, self.current_alpha))

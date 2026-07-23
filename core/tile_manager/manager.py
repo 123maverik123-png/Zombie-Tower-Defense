@@ -7,6 +7,7 @@ from .camera import Camera
 from .draw import TileDraw
 from .utils import get_path_from_map, is_on_path, can_build
 from utils.debug import dprint
+from core.iso import screen_to_world
 
 
 class TileManager:
@@ -39,6 +40,7 @@ class TileManager:
         
         self._tile_size = 65
         self.original_tile_size = 65
+        self.max_tile_size = 128  # потолок авто-подбора под изо bounding box
         self.drawer.set_tile_size(self._tile_size)
         self.map_loader.tile_size = self._tile_size
     
@@ -86,17 +88,24 @@ class TileManager:
         if self.map_width == 0 or self.map_height == 0:
             self.tile_size = self.original_tile_size
             return
-        
+
         margin = 20
         available_width = self.screen_width - margin * 2
         available_height = self.available_height - margin * 2
-        
-        tile_from_width = available_width // self.map_width
-        tile_from_height = available_height // self.map_height
-        
-        new_tile_size = min(tile_from_width, tile_from_height, self.original_tile_size)
-        new_tile_size = max(30, new_tile_size)
-        
+
+        # Изо bounding box ромба всей карты:
+        #   ширина  = (W+H) * ts * ISO_SCALE_X  (=0.5)
+        #   высота  = (W+H) * ts * ISO_SCALE_Y  (=0.25)
+        # Решаем относительно ts, чтобы ромб вписался и по ширине, и по высоте.
+        from core.iso import ISO_SCALE_X, ISO_SCALE_Y
+        diag = self.map_width + self.map_height
+        tile_from_width = available_width / (diag * ISO_SCALE_X)
+        tile_from_height = available_height / (diag * ISO_SCALE_Y)
+
+        new_tile_size = min(tile_from_width, tile_from_height)
+        new_tile_size = max(32, min(new_tile_size, self.max_tile_size))
+        new_tile_size = int(new_tile_size // 4) * 4  # кратно 4 для изо-сетки без просветов
+
         if new_tile_size != self.tile_size:
             self.tile_size = new_tile_size
             print(f"📐 Tile size calculated: {self.tile_size}px (from {self.map_width}x{self.map_height})")
@@ -128,14 +137,15 @@ class TileManager:
             renderer, self.map_data, self.tiles,
             (offset_x, offset_y),
             self.screen_width, self.available_height,
-            self.background
+            self.background, biome=self.biome
         )
     
     def get_grid_position(self, pixel_x: float, pixel_y: float) -> Tuple[int, int]:
-        """Конвертирует экранные координаты в клетки (мировые)"""
+        """Конвертирует экранные координаты в клетки (мировые), через обратную изопроекцию"""
         offset_x, offset_y = self.get_offset()
-        world_x = pixel_x - offset_x
-        world_y = pixel_y - offset_y
+        sx = pixel_x - offset_x
+        sy = pixel_y - offset_y
+        world_x, world_y = screen_to_world(sx, sy)
         grid_x = int(world_x // self.tile_size)
         grid_y = int(world_y // self.tile_size)
         return (grid_x, grid_y)

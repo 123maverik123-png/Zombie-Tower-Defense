@@ -3,6 +3,7 @@ import pygame
 import math
 import random
 import os
+from core.iso import world_to_screen
 
 
 class EnemyVisuals:
@@ -127,8 +128,9 @@ class EnemyVisuals:
         if enemy.is_flying:
             self.float_offset = math.sin(pygame.time.get_ticks() / 500) * 8
 
-        cx = enemy.x + offset_x
-        cy = enemy.y + offset_y
+        sx, sy = world_to_screen(enemy.x, enemy.y)
+        cx = sx + offset_x
+        cy = sy + offset_y
 
         # Эффекты ПОД врагом
         self._batch_effects_below(renderer, cx, cy)
@@ -214,15 +216,17 @@ class EnemyVisuals:
             if not renderer.has_texture(name):
                 renderer.load_texture(name, image)
             region = renderer.get_region(name)
-            renderer.batch.draw(region, decal.x + offset_x, decal.y + offset_y,
+            dsx, dsy = world_to_screen(decal.x, decal.y)
+            renderer.batch.draw(region, dsx + offset_x, dsy + offset_y - decal.z,
                                 region.w, region.h,
                                 color=(255, 255, 255, a))
 
     def _batch_dying(self, renderer, offset_x, offset_y):
         enemy = self.enemy
         region = self._frame_region(renderer)
-        cx = enemy.states.death_x + offset_x
-        cy = enemy.states.death_y + offset_y - enemy.height // 1.2 + enemy.height // 2 + enemy.states.fall_y_offset
+        sx, sy = world_to_screen(enemy.states.death_x, enemy.states.death_y)
+        cx = sx + offset_x
+        cy = sy + offset_y - enemy.height // 1.2 + enemy.height // 2 + enemy.states.fall_y_offset
         renderer.batch.draw(region, cx, cy, enemy.width, enemy.height,
                             rotation=-enemy.states.fall_angle)
         self._batch_wounds(renderer, offset_x, offset_y)
@@ -234,8 +238,9 @@ class EnemyVisuals:
         if alpha <= 0:
             return
         region = self._frame_region(renderer)
-        cx = enemy.states.death_x + offset_x
-        cy = enemy.states.death_y + offset_y - enemy.height + enemy.height // 2 + enemy.states.fall_y_offset
+        sx, sy = world_to_screen(enemy.states.death_x, enemy.states.death_y)
+        cx = sx + offset_x
+        cy = sy + offset_y - enemy.height + enemy.height // 2 + enemy.states.fall_y_offset
         renderer.batch.draw(region, cx, cy, enemy.width, enemy.height,
                             rotation=-enemy.states.FALL_ANGLE,
                             color=(255, 255, 255, alpha))

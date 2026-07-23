@@ -83,9 +83,11 @@ class TorchLayer:
 
     def draw_one(self, renderer, px, py, ox, oy):
         from core.opengl.batch import BLEND_ADDITIVE
+        from core.iso import world_to_screen
         batch = renderer.batch
         ts = self.tile_size
-        x, y = px + ox, py + oy
+        sx, sy = world_to_screen(px, py)
+        x, y = sx + ox, sy + oy
 
         # Столб
         if not renderer.has_texture('__torch_post__'):

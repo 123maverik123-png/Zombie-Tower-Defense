@@ -3,6 +3,7 @@ import pygame
 import random
 import math
 from services.resource_loader import ResourceLoader
+from core.iso import world_to_screen
 
 
 class TowerVisuals:
@@ -69,15 +70,19 @@ class TowerVisuals:
         if not tower.alive:
             return
 
-        cx = tower.x + offset_x
-        cy = tower.y + offset_y
+        sx, sy = world_to_screen(tower.x, tower.y)
+        cx = sx + offset_x
+        cy = sy + offset_y  # проекция основания башни на землю
 
-        # Тень под башней
+        # Тень под башней — у земли
         shadow = renderer.get_region('__shadow__')
         if shadow:
-            renderer.batch.draw(shadow, cx + 3, cy + tower.height * 0.42,
+            renderer.batch.draw(shadow, cx + 3, cy + tower.height * 0.08,
                                 tower.width * 0.9, tower.height * 0.3,
                                 color=(255, 255, 255, 80))
+
+        # Спрайт башни стоит НИЗОМ на земле, а не центром (иначе тонет в тайле)
+        base_cy = cy - tower.height * 0.5
 
         name = self.get_texture_name()
         if not renderer.has_texture(name):
@@ -85,7 +90,7 @@ class TowerVisuals:
                 self.load_image()
             renderer.load_texture(name, self.image or self._create_fallback_image())
         region = renderer.get_region(name)
-        renderer.batch.draw(region, cx, cy, tower.width, tower.height)
+        renderer.batch.draw(region, cx, base_cy, tower.width, tower.height)
 
         # Поворотная голова (пулемёт/огнемёт) — вращается к цели
         if self.has_head:
@@ -98,7 +103,7 @@ class TowerVisuals:
             if renderer.has_texture(head_name):
                 head_region = renderer.get_region(head_name)
                 # Ось вращения совпадает с тумбой на базе (чуть ниже центра)
-                renderer.batch.draw(head_region, cx, cy + tower.height * 0.05,
+                renderer.batch.draw(head_region, cx, base_cy + tower.height * 0.05,
                                     tower.width, tower.height,
                                     rotation=tower.aim_angle)
 
@@ -112,7 +117,7 @@ class TowerVisuals:
                 TowerVisuals._level_text_cache['font'] = font
             renderer.load_texture(text_name, font.render(f"Lv.{level}", True, (255, 215, 0)))
         text_region = renderer.get_region(text_name)
-        renderer.batch.draw(text_region, cx, cy - tower.height // 2 - 20 + text_region.h // 2,
+        renderer.batch.draw(text_region, cx, base_cy - tower.height // 2 - 20 + text_region.h // 2,
                             text_region.w, text_region.h)
     
     def draw_flame_batch(self, renderer, offset_x: int = 0, offset_y: int = 0):
@@ -137,10 +142,12 @@ class TowerVisuals:
         soft = renderer.get_region('__soft__')
         dot = renderer.get_region('__dot__')
 
-        start_x = tower.x + offset_x
-        start_y = tower.y + offset_y
-        end_x = target.x + offset_x
-        end_y = target.y + offset_y
+        sx1, sy1 = world_to_screen(tower.x, tower.y)
+        sx2, sy2 = world_to_screen(target.x, target.y)
+        start_x = sx1 + offset_x
+        start_y = sy1 + offset_y - tower.height * 0.45
+        end_x = sx2 + offset_x
+        end_y = sy2 + offset_y
 
         dx = end_x - start_x
         dy = end_y - start_y

@@ -164,11 +164,12 @@ class InputEvents:
         
         # 3. Проверяем клик по башне на карте
         offset_x, offset_y = state.tile_manager.get_offset()
-        # Примечание: pos уже в координатах render_surface
+        from core.iso import world_to_screen
         for tower in state.towers:
+            sx, sy = world_to_screen(tower.x, tower.y)
             tower_rect = pygame.Rect(
-                tower.x + offset_x - tower.width // 2,
-                tower.y + offset_y - tower.height // 2,
+                sx + offset_x - tower.width // 2,
+                sy + offset_y - tower.height // 2,
                 tower.width,
                 tower.height
             )
@@ -176,16 +177,15 @@ class InputEvents:
                 state.tower_ui.show(tower, (tower.x, tower.y))
                 return
 
-        # 3b. Клик по стене/воротам — то же меню улучшения/продажи.
-        # Не в режиме строительства, чтобы не мешать постройке.
         if not state.wall_placement_mode:
             for fort in list(state.gates) + list(state.walls):
                 if not fort.alive:
                     continue
                 ds = getattr(fort, 'draw_size', max(fort.width, fort.height))
+                fsx, fsy = world_to_screen(fort.x, fort.y)
                 fort_rect = pygame.Rect(
-                    fort.x + offset_x - ds // 2,
-                    fort.y + offset_y - ds // 2,
+                    fsx + offset_x - ds // 2,
+                    fsy + offset_y - ds // 2,
                     ds, ds
                 )
                 if fort_rect.collidepoint(pos):

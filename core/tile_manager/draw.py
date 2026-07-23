@@ -1,110 +1,142 @@
 # core/tile_manager/draw.py
 import math
+import os
 import pygame
 from typing import Dict, List, Tuple
 
 from core.opengl.batch import BLEND_ADDITIVE
+from core.iso import world_to_screen
+
+# Тайлы с отдельной изо-декорацией поверх базового ромба
+_DECO_TILES = {'castle': 'crystal', 'portal': 'portal'}
 
 
 class TileDraw:
-    """Отрисовка карты через GPU-батч"""
+    """Отрисовка карты через GPU-батч (изометрический режим)"""
 
     def __init__(self):
         self.tile_size = 65
-        self._scaled_tile_cache: Dict[str, pygame.Surface] = {}
         self._last_tile_size = 0
+        # iso-тайл: ромб шириной ts, высотой ts//2
+        self._iso_w = 0
+        self._iso_h = 0
+
+    def _iso_dims(self):
+        return self.tile_size, self.tile_size // 2
 
     def draw_opengl(self, renderer, map_data: List[List[str]],
                     tiles: Dict[str, pygame.Surface], camera_offset: Tuple[int, int],
-                    screen_width: int, available_height: int, background: pygame.Surface = None):
-        """Отрисовывает карту через GPU-батч"""
+                    screen_width: int, available_height: int, background: pygame.Surface = None,
+                    biome: str = 'forest'):
         if renderer is None:
             return
 
         offset_x, offset_y = camera_offset
         batch = renderer.batch
+        ts = self.tile_size
+        iso_w = ts
+        iso_h = ts * 0.5
 
-        # Фон
+        # Инвалидация кэша при смене tile_size
+        if self._last_tile_size != ts:
+            renderer.clear_textures()
+            self._last_tile_size = ts
+
         if background:
             if not renderer.has_texture("background"):
                 renderer.load_texture("background", background)
-            bg = renderer.get_region("background")
-            batch.draw(bg, 0, 0, screen_width, available_height, centered=False)
+            batch.draw(renderer.get_region("background"), 0, 0,
+                       screen_width, available_height, centered=False)
 
-        # Обновляем кэш
-        if self._last_tile_size != self.tile_size:
-            self._scaled_tile_cache.clear()
-            self._last_tile_size = self.tile_size
+        # Прогрев атласа: iso-тайлы
+        iso_dir = f"assets/images/tiles_iso/{biome}"
+        deco_dir = f"assets/images/decorations_iso/{biome}"
+        tile_map = {
+            'grass': 'tile_grass', 'castle': 'tile_castle', 'portal': 'tile_portal',
+            'road_cross': 'tile_road_cross', 'road_h': 'tile_road_straight_h',
+            'road_v': 'tile_road_straight_v', 'road_bl': 'tile_road_turn_bottom_left',
+            'road_br': 'tile_road_turn_bottom_right', 'road_tl': 'tile_road_turn_top_left',
+            'road_tr': 'tile_road_turn_top_right',
+        }
+        for name, filename in tile_map.items():
+            key = f"iso_{name}"
+            if not renderer.has_texture(key):
+                path = os.path.join(iso_dir, f"{filename}.png")
+                if os.path.exists(path):
+                    surf = pygame.image.load(path).convert_alpha()
+                    surf = pygame.transform.scale(surf, (iso_w, iso_h))
+                    renderer.load_texture(key, surf)
 
-        # Прогрев атласа (масштабированные тайлы)
-        for tile_name, tile_surface in tiles.items():
-            atlas_name = f"tile_{tile_name}_{self.tile_size}"
-            if not renderer.has_texture(atlas_name):
-                if tile_surface.get_width() != self.tile_size:
-                    scaled = pygame.transform.scale(tile_surface, (self.tile_size, self.tile_size))
-                else:
-                    scaled = tile_surface
-                renderer.load_texture(atlas_name, scaled)
+        for deco_name in ('crystal', 'portal'):
+            key = f"iso_deco_{deco_name}"
+            if not renderer.has_texture(key):
+                path = os.path.join(deco_dir, f"{deco_name}.png")
+                if os.path.exists(path):
+                    surf = pygame.image.load(path).convert_alpha()
+                    deco_h = int(iso_h * 2.5)
+                    surf = pygame.transform.scale(surf, (iso_w, deco_h))
+                    renderer.load_texture(key, surf)
 
-        # Все тайлы одним батчем.
-        # Сначала базовый слой травы под КАЖДОЙ клеткой — дорожные/портальные
-        # тайлы имеют полупрозрачные края (сглаженные углы, тени), и без
-        # подложки сквозь них виден фон. Трава закрывает эти просветы.
-        grass_region = None
-        if 'grass' in tiles:
-            grass_region = renderer.get_region(f"tile_grass_{self.tile_size}")
+        grass_region = renderer.get_region("iso_grass")
 
+        # Рисуем в порядке глубины (y-sort): строки сверху вниз
         for y in range(len(map_data)):
             for x in range(len(map_data[0])):
                 tile_name = map_data[y][x]
-                px = x * self.tile_size + offset_x
-                py = y * self.tile_size + offset_y
-                # подложка травой под всё, кроме самой травы
-                if grass_region is not None and tile_name != 'grass':
-                    batch.draw(grass_region, px, py, self.tile_size, self.tile_size, centered=False)
-                if tile_name in tiles:
-                    region = renderer.get_region(f"tile_{tile_name}_{self.tile_size}")
-                    if region:
-                        batch.draw(region, px, py, self.tile_size, self.tile_size, centered=False)
+                # Мировые пиксели — центр клетки
+                wx = (x + 0.5) * ts
+                wy = (y + 0.5) * ts
+                sx, sy = world_to_screen(wx, wy)
+                # Позиция верхнего-левого угла ромба на экране (float — без накопленного сдвига)
+                px = sx + offset_x - iso_w / 2
+                py = sy + offset_y - iso_h / 2
+
+                if grass_region and tile_name != 'grass':
+                    batch.draw(grass_region, px - 0.5, py - 0.5, iso_w + 1, iso_h + 1, centered=False)
+
+                region = renderer.get_region(f"iso_{tile_name}")
+                if region:
+                    batch.draw(region, px - 0.5, py - 0.5, iso_w + 1, iso_h + 1, centered=False)
+
+                deco_key = _DECO_TILES.get(tile_name)
+                if deco_key:
+                    deco = renderer.get_region(f"iso_deco_{deco_key}")
+                    if deco:
+                        deco_h = int(iso_h * 2.5)
+                        batch.draw(deco, px, py - deco_h + iso_h, iso_w, deco_h, centered=False)
 
         self._draw_glows(renderer, map_data, offset_x, offset_y)
 
     def _draw_glows(self, renderer, map_data, offset_x, offset_y):
-        """Мягкое пульсирующее свечение поверх портала и кристалла.
-
-        Портал — красно-фиолетовое, кристалл (castle) — бело-лазурное.
-        Аддитивные мягкие круги, амплитуда лёгкая (не навязчиво).
-        """
         soft = renderer.get_region('__soft__')
         if not soft:
             return
         batch = renderer.batch
         ts = self.tile_size
+        iso_w, iso_h = self._iso_dims()
         t = pygame.time.get_ticks() / 1000.0
-        pulse = 0.85 + 0.15 * math.sin(t * 2.2)  # 0.7..1.0
+        pulse = 0.85 + 0.15 * math.sin(t * 2.2)
 
         glow_map = {
-            'portal': [(190, 40, 120), (255, 90, 110)],   # фиолет + красно-розовый
-            'castle': [(120, 200, 245), (210, 245, 255)],  # лазурь + бело-голубой
+            'portal': [(190, 40, 120), (255, 90, 110)],
+            'castle': [(120, 200, 245), (210, 245, 255)],
         }
         for y in range(len(map_data)):
-            row = map_data[y]
-            for x in range(len(row)):
-                cols = glow_map.get(row[x])
+            for x in range(len(map_data[0])):
+                cols = glow_map.get(map_data[y][x])
                 if not cols:
                     continue
-                cx = x * ts + offset_x + ts // 2
-                cy = y * ts + offset_y + ts // 2
+                wx = (x + 0.5) * ts
+                wy = (y + 0.5) * ts
+                sx, sy = world_to_screen(wx, wy)
+                cx = int(sx + offset_x)
+                cy = int(sy + offset_y)
                 outer, inner = cols
-                a_out = int(70 * pulse)
-                a_in = int(120 * pulse)
-                batch.draw(soft, cx, cy, ts * 1.7, ts * 1.7,
-                           color=(*outer, a_out), blend=BLEND_ADDITIVE)
-                batch.draw(soft, cx, cy, ts * 0.95, ts * 0.95,
-                           color=(*inner, a_in), blend=BLEND_ADDITIVE)
+                batch.draw(soft, cx, cy, iso_w * 1.7, iso_h * 1.7,
+                           color=(*outer, int(70 * pulse)), blend=BLEND_ADDITIVE)
+                batch.draw(soft, cx, cy, iso_w * 0.95, iso_h * 0.95,
+                           color=(*inner, int(120 * pulse)), blend=BLEND_ADDITIVE)
 
     def set_tile_size(self, tile_size: int):
-        """Устанавливает размер тайла"""
         if self.tile_size != tile_size:
             self.tile_size = tile_size
-            self._scaled_tile_cache.clear()

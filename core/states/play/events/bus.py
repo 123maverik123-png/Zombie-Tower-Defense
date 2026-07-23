@@ -81,12 +81,6 @@ class BusEvents:
         tower_id = data.get('tower_id', '')
         target = data.get('target')
         projectile = data.get('projectile')
-        tower_x = data.get('tower_x', 0)
-        tower_y = data.get('tower_y', 0)
-        
-        if tower_x and tower_y and target:
-            state.decals_logic.add_muzzle_flash(tower_x, tower_y, target, tower_id)
-            state.effects_logic.add_muzzle_effect(tower_x, tower_y, tower_id)
 
         # Видимые раны на теле врага — по типу урона. Живут на враге и
         # исчезают вместе с ним. Исключены водомёт/огнемёт (струя) и кислота

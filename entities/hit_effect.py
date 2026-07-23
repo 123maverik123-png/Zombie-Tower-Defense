@@ -2,6 +2,7 @@
 import pygame
 import math
 import random
+from core.iso import world_to_screen
 
 class HitEffect:
     """Эффект попадания на враге"""
@@ -72,9 +73,10 @@ class HitEffect:
         }
     }
     
-    def __init__(self, x: float, y: float, effect_type: str = 'turret', scale: float = 1.0):
+    def __init__(self, x: float, y: float, effect_type: str = 'turret', scale: float = 1.0, z: float = 0.0):
         self.x = x
         self.y = y
+        self.z = z  # подъём над землёй в экранных пикселях (напр. высота дула башни)
         self.type = effect_type
         self.config = self.TYPES.get(effect_type, self.TYPES['turret'])
         self.scale = scale
@@ -144,9 +146,10 @@ class HitEffect:
         if not self.alive:
             return
         
-        x = self.x + offset_x
-        y = self.y + offset_y
-        
+        sx, sy = world_to_screen(self.x, self.y)
+        x = sx + offset_x
+        y = sy + offset_y - self.z
+
         # Рисуем свечение
         if self.glow_alpha > 10:
             glow_size = self.glow_radius * 2
@@ -179,8 +182,8 @@ class HitEffect:
                         int(particle['color'][2] * trail_alpha / 255)
                     )
                     pygame.draw.line(screen, trail_color,
-                                   (trail[i][0] + offset_x, trail[i][1] + offset_y),
-                                   (trail[i+1][0] + offset_x, trail[i+1][1] + offset_y), 1)
+                                   (trail[i][0] + offset_x, trail[i][1] + offset_y - self.z),
+                                   (trail[i+1][0] + offset_x, trail[i+1][1] + offset_y - self.z), 1)
             
             size = int(particle['size'] * life_ratio)
             if size > 1:
@@ -205,7 +208,7 @@ class HitEffect:
                     particle_surf.blit(inner_surf, (0, 0))
                 
                 screen.blit(particle_surf, (particle['x'] + offset_x - size - 2,
-                                           particle['y'] + offset_y - size - 2))
+                                           particle['y'] + offset_y - self.z - size - 2))
 
     def draw_batch(self, renderer, offset_x: int = 0, offset_y: int = 0):
         """Рисует эффект через GPU-батч (свечение и частицы — аддитивно)"""
@@ -216,8 +219,9 @@ class HitEffect:
         soft = renderer.get_region('__soft__')
         dot = renderer.get_region('__dot__')
 
-        x = self.x + offset_x
-        y = self.y + offset_y
+        sx, sy = world_to_screen(self.x, self.y)
+        x = sx + offset_x
+        y = sy + offset_y
         color = self.config['color']
 
         if self.glow_alpha > 10:
@@ -233,14 +237,17 @@ class HitEffect:
             if len(trail) > 1:
                 for i in range(len(trail) - 1):
                     trail_alpha = int(alpha * (i / len(trail)) * 0.3)
-                    batch.draw_line(trail[i][0] + offset_x, trail[i][1] + offset_y,
-                                    trail[i + 1][0] + offset_x, trail[i + 1][1] + offset_y,
+                    t0x, t0y = world_to_screen(trail[i][0], trail[i][1])
+                    t1x, t1y = world_to_screen(trail[i + 1][0], trail[i + 1][1])
+                    batch.draw_line(t0x + offset_x, t0y + offset_y - self.z,
+                                    t1x + offset_x, t1y + offset_y - self.z,
                                     1, (*particle['color'], trail_alpha), blend=BLEND_ADDITIVE)
 
             size = int(particle['size'] * life_ratio)
             if size > 1:
-                px = particle['x'] + offset_x
-                py = particle['y'] + offset_y
+                psx, psy = world_to_screen(particle['x'], particle['y'])
+                px = psx + offset_x
+                py = psy + offset_y - self.z
                 c = particle['color']
                 base_color = (max(0, min(255, c[0])), max(0, min(255, c[1])),
                               max(0, min(255, c[2])), alpha)
