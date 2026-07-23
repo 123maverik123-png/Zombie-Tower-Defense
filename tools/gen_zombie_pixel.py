@@ -1,10 +1,14 @@
 # tools/gen_zombie_pixel.py
-"""Процедурный пиксель-арт зомби: 4 направления x 4 кадра ходьбы.
+"""Процедурный пиксель-арт зомби: 4 диагональных (изометрических) слота x 4 кадра ходьбы.
 
-Перспектива:
-  down  — вид спереди (лицо)
-  up    — вид сзади (спина)
-  left/right — профиль (руки вытянуты вперёд, шаркающая походка)
+Мир рисуется в изометрии (core/iso.py): движение вдоль мировых осей на
+экране выглядит как диагональ, поэтому вместо кардинальных поз (анфас/спина/
+профиль) рисуются 2 диагональные позы, каждая зеркалится под противоположный
+крен:
+  right = draw_diag_toward         (к камере, SE, лицо видно в 3/4)
+  down  = mirror(draw_diag_toward) (к камере, SW)
+  up    = draw_diag_away           (от камеры, NE, спина видна в 3/4)
+  left  = mirror(draw_diag_away)   (от камеры, NW)
 
 Рисуем на логической сетке 26x34, масштабируем x4 (NEAREST) для чёткого пикселя.
 Запуск: python tools/gen_zombie_pixel.py
@@ -15,6 +19,7 @@ from PIL import Image
 GW, GH = 26, 34     # логическая сетка
 SCALE = 4           # апскейл
 CANVAS = 136        # итоговый холст (под формат листов игры)
+DIAG_ROTATE_DEG = 14  # финальный лёгкий поворот поверх изо-пропорций/шва (см. generate())
 
 # ===== Палитры тёмного фэнтези (по типам врагов) =====
 
@@ -106,115 +111,127 @@ def _wings(g, P, frame, cx, bob, side_view=False):
         rect(g, cx + 12, 7 + bob + flap, cx + 13, 8 + bob + flap, edge)
 
 
-def draw_front(P, frame, wings=False):
+def _lighten(c, k=1.3):
+    return tuple(max(0, min(255, int(v * k))) for v in c)
+
+
+def _seam_block(g, y0, y1, x0, x1, seam0, seam_step, front_c, side_c):
+    """Двугранный блок (торс/голова в 3/4): передняя и боковая грань разделены
+    ДИАГОНАЛЬНЫМ швом (не плоской вертикальной линией) — шов = seam0 +
+    seam_step*(y-y0). Это ключевая деталь, которая продаёт "разворот корпуса
+    в 3/4" (как в изометрических RPG), а не плоский анфас с тенью сбоку.
+    """
+    for y in range(y0, y1 + 1):
+        seam = int(round(seam0 + seam_step * (y - y0)))
+        seam = max(x0 - 1, min(x1, seam))
+        if seam >= x0:
+            rect(g, x0, y, seam, y, front_c)
+        if seam + 1 <= x1:
+            rect(g, seam + 1, y, x1, y, side_c)
+
+
+def draw_diag_toward(P, frame, wings=False):
+    """Изометрическая диагональ К камере (SE): вид сверху-сбоку.
+
+    Приземистые пропорции (торс/ноги компрессированы по высоте — камера
+    смотрит сверху вниз, а не в упор), широкая диагональная стойка ног
+    (ближняя к камере нога — крупнее и дальше от центра, дальняя — уже),
+    блики на "верхних" поверхностях (макушка, плечи, ботинки) продают
+    угол обзора сверху. Лицо видно в 3/4 (ближняя сторона крупнее).
+    """
     g = [[None] * GW for _ in range(GH)]
     cx = GW // 2
     bob = [0, -1, 0, -1][frame]
-    if wings:
-        _wings(g, P, frame, cx, bob)
-    bob = _legs(g, P, frame, cx)
-
-    # Торс (рваная рубаха)
-    rect(g, cx - 6, 11 + bob, cx + 6, 20 + bob, P['cloth'])
-    rect(g, cx - 6, 17 + bob, cx + 6, 20 + bob, P['cloth_d'])
-    rect(g, cx + 3, 12 + bob, cx + 5, 14 + bob, P['skin_d'])   # дыра до кожи
-    rect(g, cx - 4, 16 + bob, cx - 2, 17 + bob, P['blood'])    # кровь
-
-    # Руки: одна свисает, вторая полусогнута вперёд
-    swing = [0, 1, 0, -1][frame]
-    rect(g, cx - 9, 11 + bob, cx - 7, 18 + bob + swing, P['cloth_d'])
-    rect(g, cx - 9, 17 + bob + swing, cx - 7, 19 + bob + swing, P['skin'])
-    rect(g, cx + 7, 11 + bob, cx + 9, 15 + bob - swing, P['cloth_d'])
-    rect(g, cx + 7, 14 + bob - swing, cx + 9, 16 + bob - swing, P['skin'])
-
-    # Шея и голова
-    rect(g, cx - 2, 10 + bob, cx + 2, 10 + bob, P['skin_d'])
-    rect(g, cx - 5, 2 + bob, cx + 5, 9 + bob, P['skin'])
-    rect(g, cx + 3, 2 + bob, cx + 5, 9 + bob, P['skin_d'])      # тень справа
-    rect(g, cx - 5, 2 + bob, cx - 4, 3 + bob, P['skin_d'])      # гнилая макушка
-    # Глаза: провалы со светящейся точкой
-    rect(g, cx - 4, 5 + bob, cx - 2, 6 + bob, P['out'])
-    rect(g, cx + 2, 5 + bob, cx + 4, 6 + bob, P['out'])
-    px(g, cx - 3, 5 + bob, P['eye'])
-    px(g, cx + 3, 5 + bob, P['eye'])
-    # Рот: рваная челюсть
-    rect(g, cx - 2, 8 + bob, cx + 2, 8 + bob, P['out'])
-    px(g, cx - 1, 8 + bob, P['blood'])
-
-    outline(g, P['out'])
-    return g
-
-
-def draw_back(P, frame, wings=False):
-    g = [[None] * GW for _ in range(GH)]
-    cx = GW // 2
-    bob = [0, -1, 0, -1][frame]
-    if wings:
-        _wings(g, P, frame, cx, bob)
-    bob = _legs(g, P, frame, cx)
-
-    # Торс со спины
-    rect(g, cx - 6, 11 + bob, cx + 6, 20 + bob, P['cloth'])
-    rect(g, cx - 6, 11 + bob, cx + 6, 13 + bob, P['cloth_d'])
-    rect(g, cx - 1, 14 + bob, cx + 2, 18 + bob, P['cloth_d'])   # рваная спина
-    rect(g, cx, 15 + bob, cx + 1, 17 + bob, P['skin_d'])        # позвоночник
-
-    # Руки
-    swing = [0, 1, 0, -1][frame]
-    rect(g, cx - 9, 11 + bob, cx - 7, 18 + bob + swing, P['cloth_d'])
-    rect(g, cx - 9, 17 + bob + swing, cx - 7, 19 + bob + swing, P['skin'])
-    rect(g, cx + 7, 11 + bob, cx + 9, 18 + bob - swing, P['cloth_d'])
-    rect(g, cx + 7, 17 + bob - swing, cx + 9, 19 + bob - swing, P['skin'])
-
-    # Затылок: без лица, гнилые пятна
-    rect(g, cx - 2, 10 + bob, cx + 2, 10 + bob, P['skin_d'])
-    rect(g, cx - 5, 2 + bob, cx + 5, 9 + bob, P['skin'])
-    rect(g, cx - 5, 2 + bob, cx - 3, 9 + bob, P['skin_d'])
-    rect(g, cx + 1, 3 + bob, cx + 3, 5 + bob, P['skin_d'])
-    rect(g, cx - 1, 6 + bob, cx, 7 + bob, P['blood'])           # рана на затылке
-
-    outline(g, P['out'])
-    return g
-
-
-def draw_side(P, frame, wings=False):
-    """Профиль, смотрит ВПРАВО: руки вытянуты вперёд, шаркает."""
-    g = [[None] * GW for _ in range(GH)]
-    cx = GW // 2 - 2
-    bob = [0, -1, 0, -1][frame]
-    stride = [2, 0, -2, 0][frame]
+    cloth_l = _lighten(P['cloth'])
     if wings:
         _wings(g, P, frame, cx, bob, side_view=True)
 
-    # Ноги: шаг вперёд/назад
-    front_x = cx + 1 + stride
-    back_x = cx - 2 - stride
-    rect(g, front_x, 21 + bob, front_x + 2, 29, P['pants'])
-    rect(g, front_x, 30, front_x + 3, 31, P['out'])
-    rect(g, back_x, 21 + bob, back_x + 2, 29, P['pants_d'])
-    rect(g, back_x - 1, 30, back_x + 2, 31, P['out'])
+    # Ноги: широкая диагональная стойка, компрессированы по высоте (18..25),
+    # ближняя (левая) нога крупнее/дальше от центра, дальняя (правая) уже.
+    spread = [0, 1, 0, 1][frame]
+    ly = 18 + bob
+    rect(g, cx - 7 - spread, ly, cx - 2, 25, P['pants'])
+    rect(g, cx - 7 - spread, 23, cx - 2, 25, P['pants_d'])
+    rect(g, cx - 8 - spread, 26, cx - 2, 27, P['out'])
+    rect(g, cx - 8 - spread, 26, cx - 2, 26, P['pants_d'])      # блик верха ближнего ботинка
+    rect(g, cx + 2, ly, cx + 4 + spread, 24, P['pants_d'])
+    rect(g, cx + 2, 26, cx + 5 + spread, 27, P['out'])          # дальний ботинок (уже)
 
-    # Торс (узкий, наклонён вперёд)
-    rect(g, cx - 3, 11 + bob, cx + 3, 20 + bob, P['cloth'])
-    rect(g, cx - 3, 17 + bob, cx + 3, 20 + bob, P['cloth_d'])
-    rect(g, cx + 1, 12 + bob, cx + 3, 13 + bob, P['skin_d'])
+    # Торс (рваная рубаха): передняя грань (cloth) + боковая грань (cloth_d)
+    # разделены ДИАГОНАЛЬНЫМ швом — корпус развёрнут в 3/4, не анфас.
+    _seam_block(g, 11 + bob, 17 + bob, cx - 6, cx + 5, cx - 2, 0.5, P['cloth'], P['cloth_d'])
+    rect(g, cx - 6, 11 + bob, cx + 5, 11 + bob, cloth_l)        # блик верха плеч
+    rect(g, cx + 2, 12 + bob, cx + 4, 13 + bob, P['skin_d'])    # дыра до кожи
+    rect(g, cx - 3, 14 + bob, cx - 1, 15 + bob, P['blood'])     # кровь
 
-    # Обе руки вытянуты вперёд (вправо)
-    arm_wob = [0, 1, 0, -1][frame]
-    rect(g, cx + 3, 12 + bob, cx + 10, 13 + bob, P['cloth_d'])
-    rect(g, cx + 10, 12 + bob, cx + 11, 13 + bob, P['skin'])
-    rect(g, cx + 2, 15 + bob + arm_wob, cx + 8, 16 + bob + arm_wob, P['cloth'])
-    rect(g, cx + 8, 15 + bob + arm_wob, cx + 9, 16 + bob + arm_wob, P['skin'])
+    # Руки: ближняя (левая) свисает крупно, дальняя (правая) короче/выше
+    swing = [0, 1, 0, -1][frame]
+    rect(g, cx - 9, 11 + bob, cx - 7, 17 + bob + swing, P['cloth_d'])
+    rect(g, cx - 9, 15 + bob + swing, cx - 7, 18 + bob + swing, P['skin'])
+    rect(g, cx + 5, 12 + bob, cx + 8, 15 + bob - swing, P['cloth_d'])
+    rect(g, cx + 5, 14 + bob - swing, cx + 8, 16 + bob - swing, P['skin'])
 
-    # Голова в профиль (наклонена вперёд)
-    hx = cx + 1
-    rect(g, hx - 4, 2 + bob, hx + 4, 9 + bob, P['skin'])
-    rect(g, hx - 4, 2 + bob, hx - 2, 9 + bob, P['skin_d'])      # затылок в тени
-    rect(g, hx + 4, 6 + bob, hx + 5, 7 + bob, P['skin'])        # нос
-    rect(g, hx + 1, 5 + bob, hx + 2, 6 + bob, P['out'])         # глазница
+    # Голова в 3/4: передняя грань лица (skin) + боковая грань щеки (skin_d)
+    # разделены диагональным швом (тот же приём, что и в торсе).
+    hx = cx
+    rect(g, hx - 2, 10 + bob, hx + 2, 10 + bob, P['skin_d'])    # шея
+    _seam_block(g, 3 + bob, 9 + bob, hx - 5, hx + 5, hx + 1, 0.45, P['skin'], P['skin_d'])
+    rect(g, hx - 5, 2 + bob, hx + 5, 2 + bob, P['skin_l'])      # блик макушки сверху
+    rect(g, hx - 3, 5 + bob, hx - 1, 6 + bob, P['out'])         # ближний глаз крупнее
+    rect(g, hx + 2, 5 + bob, hx + 3, 6 + bob, P['out'])         # дальний глаз уже
+    px(g, hx - 2, 5 + bob, P['eye'])
     px(g, hx + 2, 5 + bob, P['eye'])
-    rect(g, hx + 2, 8 + bob, hx + 4, 8 + bob, P['out'])         # рот
-    rect(g, hx - 2, 10 + bob, hx + 1, 10 + bob, P['skin_d'])    # шея
+    rect(g, hx - 2, 8 + bob, hx + 1, 8 + bob, P['out'])         # рот
+    px(g, hx - 1, 8 + bob, P['blood'])
+
+    outline(g, P['out'])
+    return g
+
+
+def draw_diag_away(P, frame, wings=False):
+    """Изометрическая диагональ ОТ камеры (NE): вид сверху-сбоку, со спины.
+
+    Та же приземистая геометрия и широкая диагональная стойка, что и в
+    draw_diag_toward, но со спины (без лица, гнилые пятна на затылке).
+    """
+    g = [[None] * GW for _ in range(GH)]
+    cx = GW // 2
+    bob = [0, -1, 0, -1][frame]
+    cloth_l = _lighten(P['cloth'])
+    if wings:
+        _wings(g, P, frame, cx, bob, side_view=True)
+
+    # Ноги: та же диагональная стойка, что и в toward
+    spread = [0, 1, 0, 1][frame]
+    ly = 18 + bob
+    rect(g, cx - 7 - spread, ly, cx - 2, 25, P['pants'])
+    rect(g, cx - 7 - spread, 23, cx - 2, 25, P['pants_d'])
+    rect(g, cx - 8 - spread, 26, cx - 2, 27, P['out'])
+    rect(g, cx - 8 - spread, 26, cx - 2, 26, P['pants_d'])
+    rect(g, cx + 2, ly, cx + 4 + spread, 24, P['pants_d'])
+    rect(g, cx + 2, 26, cx + 5 + spread, 27, P['out'])
+
+    # Торс со спины: та же диагональная развёртка граней, что и в toward
+    # (кроме плеч — сзади обе грани одного тона тела, спина отличается пятном).
+    _seam_block(g, 11 + bob, 17 + bob, cx - 6, cx + 5, cx - 2, 0.5, P['cloth'], P['cloth_d'])
+    rect(g, cx - 6, 11 + bob, cx + 5, 11 + bob, cloth_l)        # блик верха плеч
+    rect(g, cx - 1, 13 + bob, cx + 2, 16 + bob, P['cloth_d'])   # рваная спина
+    rect(g, cx, 14 + bob, cx + 1, 16 + bob, P['skin_d'])        # позвоночник
+
+    # Руки: ближняя (левая) крупнее, дальняя (правая) короче
+    swing = [0, 1, 0, -1][frame]
+    rect(g, cx - 9, 11 + bob, cx - 7, 17 + bob + swing, P['cloth_d'])
+    rect(g, cx - 9, 15 + bob + swing, cx - 7, 18 + bob + swing, P['skin'])
+    rect(g, cx + 5, 12 + bob, cx + 8, 18 + bob - swing, P['cloth_d'])
+    rect(g, cx + 5, 16 + bob - swing, cx + 8, 19 + bob - swing, P['skin'])
+
+    # Затылок в 3/4: та же диагональная развёртка граней (без лица)
+    hx = cx
+    rect(g, hx - 2, 10 + bob, hx + 2, 10 + bob, P['skin_d'])
+    _seam_block(g, 3 + bob, 9 + bob, hx - 5, hx + 5, hx + 1, 0.45, P['skin'], P['skin_d'])
+    rect(g, hx - 5, 2 + bob, hx + 5, 2 + bob, P['skin_l'])      # блик макушки сверху
+    rect(g, hx + 1, 4 + bob, hx + 3, 6 + bob, P['skin_d'])      # доп. тень (гнилое пятно)
+    rect(g, hx - 1, 6 + bob, hx, 7 + bob, P['blood'])           # рана на затылке
 
     outline(g, P['out'])
     return g
@@ -373,6 +390,12 @@ def mirror(img: Image.Image) -> Image.Image:
     return img.transpose(Image.FLIP_LEFT_RIGHT)
 
 
+def _rotate(img: Image.Image, angle: float) -> Image.Image:
+    """Лёгкий финальный поворот всего спрайта (поверх уже изометричного силуэта
+    и диагонального шва граней) — усиливает читаемость направления."""
+    return img.rotate(angle, resample=Image.NEAREST, expand=False)
+
+
 def _apply_size(img: Image.Image, mod: float) -> Image.Image:
     if mod == 1.0:
         return img
@@ -391,15 +414,20 @@ def generate(variant='normal', out_dir=None):
     os.makedirs(out_dir, exist_ok=True)
     for i in range(4):
         if wings:
-            # Летучая мышь: собственные функции рисования
+            # Летучая мышь: собственные функции рисования (пока не диагональные)
             front, back, side = draw_bat_front(P, i), draw_bat_back(P, i), draw_bat_side(P, i)
+            _apply_size(grid_to_image(front), mod).save(f"{out_dir}/down_{i}.png")
+            _apply_size(grid_to_image(back), mod).save(f"{out_dir}/up_{i}.png")
+            right = _apply_size(grid_to_image(side), mod)
+            right.save(f"{out_dir}/right_{i}.png")
+            mirror(right).save(f"{out_dir}/left_{i}.png")
         else:
-            front, back, side = draw_front(P, i), draw_back(P, i), draw_side(P, i)
-        _apply_size(grid_to_image(front), mod).save(f"{out_dir}/down_{i}.png")
-        _apply_size(grid_to_image(back), mod).save(f"{out_dir}/up_{i}.png")
-        right = _apply_size(grid_to_image(side), mod)
-        right.save(f"{out_dir}/right_{i}.png")
-        mirror(right).save(f"{out_dir}/left_{i}.png")
+            toward = _apply_size(_rotate(grid_to_image(draw_diag_toward(P, i)), -DIAG_ROTATE_DEG), mod)
+            away = _apply_size(_rotate(grid_to_image(draw_diag_away(P, i)), -DIAG_ROTATE_DEG), mod)
+            toward.save(f"{out_dir}/right_{i}.png")
+            mirror(toward).save(f"{out_dir}/down_{i}.png")
+            away.save(f"{out_dir}/up_{i}.png")
+            mirror(away).save(f"{out_dir}/left_{i}.png")
     print(f"OK {out_dir}")
 
 

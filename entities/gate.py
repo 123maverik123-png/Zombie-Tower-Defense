@@ -5,6 +5,31 @@ from entities.base import Entity
 from services.resource_loader import ResourceLoader
 from entities.wall import FortifyUpgrades
 
+_gate_image_cache = {}
+
+
+def load_gate_image(orientation: str, size: int) -> pygame.Surface:
+    """Спрайт ворот по ориентации (с кэшем).
+
+    'h' не имеет отдельного файла — тот же изо-арт, что 'v', отражённый по
+    горизонтали (см. entities/wall.py::load_wall_image — та же логика и
+    геометрическое обоснование: стена/ворота вдоль X и вдоль Y — зеркала).
+    """
+    key = (orientation, size)
+    cached = _gate_image_cache.get(key)
+    if cached is not None:
+        return cached.copy()
+
+    loader = ResourceLoader()
+    source = 'v' if orientation == 'h' else orientation
+    img = loader.load_image(f"fortify/gate_{source}.png", scale=(size, size))
+    if orientation == 'h':
+        img = pygame.transform.flip(img, True, False)
+
+    _gate_image_cache[key] = img
+    return img.copy()
+
+
 class Gate(Entity):
     """Ворота — блокируют путь, не ближе 10 клеток к порталу."""
 
@@ -35,10 +60,7 @@ class Gate(Entity):
     def _create_image(self):
         # Готовый спрайт по ориентации; при ошибке — процедурный fallback
         try:
-            loader = ResourceLoader()
-            self.image = loader.load_image(
-                f"fortify/gate_{self.orientation}.png",
-                scale=(self.draw_size, self.draw_size))
+            self.image = load_gate_image(self.orientation, self.draw_size)
             return
         except Exception:
             pass

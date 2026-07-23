@@ -72,15 +72,35 @@ class PreviewDraw:
 
         self._draw_cell_highlight(screen, cx, cy, tile_size, can_build)
 
-        # Квадратная зона поражения (сторона 2×range, выровнена по клеткам)
+        # Зона поражения в мире — квадрат (in_square_range, targeting.py),
+        # но выровненный по МИРОВЫМ осям, а не экранным. В изопроекции
+        # такой квадрат превращается в ромб — считаем экранные точки его
+        # углов через world_to_screen, а не рисуем квадрат по экранным cx/cy.
         config = state._get_tower_config(state.selected_tower)
         radius = config.get('range', 200)
 
-        side = radius * 2
-        range_surf = pygame.Surface((side, side), pygame.SRCALPHA)
-        range_surf.fill((0, 255, 0, 30))
-        screen.blit(range_surf, (cx - radius, cy - radius))
-        pygame.draw.rect(screen, (0, 255, 0), (cx - radius, cy - radius, side, side), 1)
+        ox0, oy0 = world_to_screen(0, 0)
+
+        def corner(dx, dy):
+            sx, sy = world_to_screen(dx, dy)
+            return (cx + sx - ox0, cy + sy - oy0)
+
+        points = [
+            corner(-radius, -radius),
+            corner(radius, -radius),
+            corner(radius, radius),
+            corner(-radius, radius),
+        ]
+
+        min_x = min(p[0] for p in points)
+        min_y = min(p[1] for p in points)
+        max_x = max(p[0] for p in points)
+        max_y = max(p[1] for p in points)
+        range_surf = pygame.Surface((int(max_x - min_x) + 2, int(max_y - min_y) + 2), pygame.SRCALPHA)
+        local_points = [(px - min_x, py - min_y) for px, py in points]
+        pygame.draw.polygon(range_surf, (0, 255, 0, 30), local_points)
+        screen.blit(range_surf, (min_x, min_y))
+        pygame.draw.polygon(screen, (0, 255, 0), points, 1)
 
         name = state.selected_tower.upper()
         cost = config.get('cost', 100)
@@ -126,8 +146,13 @@ class PreviewDraw:
         img = self._ghost_cache.get((sprite_name, tile_size))
         if img is None:
             try:
-                from services.resource_loader import ResourceLoader
-                base = ResourceLoader().load_image(f"fortify/{sprite_name}.png")
+                if sprite_name.startswith('wall_'):
+                    from entities.wall import load_wall_image
+                    variant = sprite_name[len('wall_'):]
+                    base = load_wall_image(variant, tile_size)
+                else:
+                    from services.resource_loader import ResourceLoader
+                    base = ResourceLoader().load_image(f"fortify/{sprite_name}.png")
                 img = pygame.transform.scale(base, (tile_size, tile_size)).convert_alpha()
                 img.set_alpha(150)
                 self._ghost_cache[(sprite_name, tile_size)] = img

@@ -31,7 +31,15 @@ class EnemyMovement:
         return target_x + nx * shift, target_y + ny * shift
 
     def _face(self, vx, vy):
-        """Ставит direction спрайта по вектору (vx,vy)."""
+        """Ставит direction спрайта по вектору (vx,vy).
+
+        ПРИМЕЧАНИЕ: экранная проекция (world_to_screen) тут не годится —
+        ISO_SCALE_X (0.5) вдвое больше ISO_SCALE_Y (0.25), поэтому для
+        любого движения вдоль одной мировой оси (типичный сегмент пути
+        на сетке) экранный sx всегда доминирует над sy и направление
+        вырождается в одно только "право/лево". Разнообразие направлений
+        для 4 спрайтов даёт только классификация по мировым осям.
+        """
         if abs(vx) > abs(vy):
             self.enemy.direction = 'right' if vx > 0 else 'left'
         else:
@@ -307,10 +315,7 @@ class EnemyMovement:
         enemy.dx = dx
         enemy.dy = dy
         
-        if abs(dx) > abs(dy):
-            enemy.direction = 'right' if dx > 0 else 'left'
-        else:
-            enemy.direction = 'down' if dy > 0 else 'up'
+        self._face(dx, dy)
         
         current_speed = enemy.speed * enemy.effects.slow_multiplier
         self.move_distance = current_speed * dt

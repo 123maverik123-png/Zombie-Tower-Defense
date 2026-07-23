@@ -6,6 +6,84 @@ from services.resource_loader import ResourceLoader
 
 WALL_VARIANTS = ('h', 'v', 'tl', 'tr', 'bl', 'br')
 
+_wall_image_cache = {}
+_corner_sources = None
+
+
+def _build_corner_sources():
+    """Собирает tl/tr/bl/br из двух половинок wall_v — своих файлов у углов нет.
+
+    wall_v проходит через центр тайла: правая половина картинки — это
+    "плечо" к соседу сверху (up), левая — "плечо" к соседу снизу (down).
+    Зеркалим их по горизонтали (та же логика, что даёт 'h' из 'v') — получаем
+    плечи "влево"/"вправо". Угол — это пара плеч, сходящихся в центре:
+    tl=up+left, tr=up+right, bl=down+left, br=down+right (совпадает с
+    _wall_variant_at в towers.py).
+    """
+    base = ResourceLoader().load_image("fortify/wall_v.png")
+    w, h = base.get_size()
+    half = w // 2
+
+    v_up = base.subsurface((half, 0, w - half, h)).copy()
+    v_down = base.subsurface((0, 0, half, h)).copy()
+
+    def blank():
+        return pygame.Surface((w, h), pygame.SRCALPHA)
+
+    up_half = blank()
+    up_half.blit(v_up, (half, 0))
+
+    down_half = blank()
+    down_half.blit(v_down, (0, 0))
+
+    left_half = blank()
+    left_half.blit(pygame.transform.flip(v_up, True, False), (0, 0))
+
+    right_half = blank()
+    right_half.blit(pygame.transform.flip(v_down, True, False), (half, 0))
+
+    def combine(a, b):
+        img = blank()
+        img.blit(a, (0, 0))
+        img.blit(b, (0, 0))
+        return img
+
+    return {
+        'tl': combine(up_half, left_half),
+        'tr': combine(up_half, right_half),
+        'bl': combine(down_half, left_half),
+        'br': combine(down_half, right_half),
+    }
+
+
+def load_wall_image(variant: str, size: int) -> pygame.Surface:
+    """Спрайт стены по варианту и размеру (с кэшем).
+
+    'h' не имеет отдельного файла — это тот же изо-арт, что 'v', отражённый
+    по горизонтали: в проекции core/iso.py стена вдоль X и стена вдоль Y —
+    ровно зеркальные отражения друг друга (dx меняет знак, dy тот же).
+    Угловые варианты собираются из половинок 'v', см. _build_corner_sources.
+    """
+    key = (variant, size)
+    cached = _wall_image_cache.get(key)
+    if cached is not None:
+        return cached.copy()
+
+    if variant in ('tl', 'tr', 'bl', 'br'):
+        global _corner_sources
+        if _corner_sources is None:
+            _corner_sources = _build_corner_sources()
+        img = pygame.transform.smoothscale(_corner_sources[variant], (size, size))
+    else:
+        loader = ResourceLoader()
+        source_variant = 'v' if variant == 'h' else variant
+        img = loader.load_image(f"fortify/wall_{source_variant}.png", scale=(size, size))
+        if variant == 'h':
+            img = pygame.transform.flip(img, True, False)
+
+    _wall_image_cache[key] = img
+    return img.copy()
+
 
 class FortifyUpgrades:
     """Уровни прочности стены/ворот (совместимо с TowerUI: level/cost/upgrade)."""
@@ -78,10 +156,7 @@ class Wall(Entity):
     def _create_image(self):
         # Готовый спрайт по варианту; при ошибке — процедурный fallback
         try:
-            loader = ResourceLoader()
-            self.image = loader.load_image(
-                f"fortify/wall_{self.variant}.png",
-                scale=(self.draw_size, self.draw_size))
+            self.image = load_wall_image(self.variant, self.draw_size)
             return
         except Exception:
             pass
