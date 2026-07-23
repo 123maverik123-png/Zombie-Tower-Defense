@@ -35,9 +35,19 @@ class UIOverlay:
         self.height = height
 
         self.surface = pygame.Surface((width, height), pygame.SRCALPHA, 32)
-        self.texture = ctx.texture((width, height), 4)
-        self.texture.filter = (moderngl.LINEAR, moderngl.LINEAR)
-        self.texture.swizzle = surface_swizzle(self.surface)
+        # Тройная буферизация текстуры: пишем каждый кадр в следующую из трёх.
+        # Иначе texture.write() бьёт в текстуру, которую GPU ещё рисует из прошлого
+        # кадра — драйвер NVIDIA плодит теневые копии (renaming), и в 2K они
+        # (14 МБ каждая) копятся до заполнения VRAM. Ping-pong даёт текстуре 3
+        # кадра «остыть», прежде чем в неё снова пишут — копии не нужны.
+        self._textures = []
+        for _ in range(3):
+            tex = ctx.texture((width, height), 4)
+            tex.filter = (moderngl.LINEAR, moderngl.LINEAR)
+            tex.swizzle = surface_swizzle(self.surface)
+            self._textures.append(tex)
+        self._tex_index = 0
+        self.texture = self._textures[0]
 
         self.program = ctx.program(vertex_shader=_VERTEX_SHADER,
                                    fragment_shader=_FRAGMENT_SHADER)
@@ -65,6 +75,9 @@ class UIOverlay:
 
     def render(self):
         """Загружает поверхность в текстуру и рисует поверх сцены."""
+        # Пишем в следующую текстуру цикла (тройная буферизация — см. __init__)
+        self._tex_index = (self._tex_index + 1) % len(self._textures)
+        self.texture = self._textures[self._tex_index]
         self.texture.write(bytes(self.surface.get_view('1')))
         self.texture.use(0)
         self.vao.render(moderngl.TRIANGLES)
@@ -74,14 +87,21 @@ class UIOverlay:
             return
         self.width = width
         self.height = height
-        self.texture.release()
+        for tex in self._textures:
+            tex.release()
         self.surface = pygame.Surface((width, height), pygame.SRCALPHA, 32)
-        self.texture = self.ctx.texture((width, height), 4)
-        self.texture.filter = (moderngl.LINEAR, moderngl.LINEAR)
-        self.texture.swizzle = surface_swizzle(self.surface)
+        self._textures = []
+        for _ in range(3):
+            tex = self.ctx.texture((width, height), 4)
+            tex.filter = (moderngl.LINEAR, moderngl.LINEAR)
+            tex.swizzle = surface_swizzle(self.surface)
+            self._textures.append(tex)
+        self._tex_index = 0
+        self.texture = self._textures[0]
 
     def destroy(self):
-        self.texture.release()
+        for tex in self._textures:
+            tex.release()
         self.vao.release()
         self.vbo.release()
         self.program.release()
